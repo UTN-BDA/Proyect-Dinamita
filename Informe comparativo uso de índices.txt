@@ -1,0 +1,5 @@
+Actividad: Informe
+	1. Comparación de rendimiento: Medir tiempos de respuesta de la misma consulta con y sin índices.
+	2. Análisis de planes de ejecución: Interpretar planes de ejecución con diferentes tipos de índices
+	3. Dimensionamiento: Calcular el impacto en el almacenamiento de diferentes estrategias de indexación
+	4. Optimización: Identificar y corregir índices ineficientes o redundantes
