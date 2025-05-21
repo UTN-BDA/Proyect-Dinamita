@@ -1,5 +1,4 @@
-# games/management/commands/index_report.py
-import os  # manejar rutas y sistema de ficheros
+import os
 from django.core.management.base import BaseCommand
 from django.db import connection, transaction
 from django.db.utils import DataError, IntegrityError
