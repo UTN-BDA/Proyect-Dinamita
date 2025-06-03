@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}
+    Inicio
+{% endblock title %}
+{% block content %}
+    <h2 class="mb-4">Bienvenido a la Página de Inicio</h2>
+    <div class="mt-4">
+        <a href="{% url 'game_search' %}" class="btn btn-primary">Buscar Juegos</a>
+        <a href="{% url 'all_games' %}" class="btn btn-secondary">Ver Todos los Juegos</a>
+    </div>
+{% endblock content %}

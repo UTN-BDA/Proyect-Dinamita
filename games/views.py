@@ -25,3 +25,10 @@ def game_search(request):
         "selected_field": selected_field,
         "query": query,
     })
+
+def home(request):
+    return render(request, "home.html")
+
+def all(request):
+    games = Game.objects.all()
+    return render(request, "all.html", {"games": games})
