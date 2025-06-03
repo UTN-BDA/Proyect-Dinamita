@@ -1,5 +1,7 @@
 from django.shortcuts import render
 from .models import Game
+from collections import Counter
+
 
 def game_search(request):
     fields = [
@@ -32,3 +34,21 @@ def home(request):
 def all(request):
     games = Game.objects.all()
     return render(request, "all.html", {"games": games})
+
+def graphs_home(request):
+    return render(request, "graphs_home.html")
+
+def graphs_by_gender(request):
+    # Obtener todos los géneros de los juegos
+    all_genres = []
+    for game in Game.objects.exclude(genres__isnull=True).exclude(genres=""):
+        # Suponiendo que los géneros están separados por comas
+        if game.genres is not None:
+            all_genres.extend([g.strip() for g in game.genres.split(",") if g.strip()])
+    genre_counts = Counter(all_genres)
+    labels = list(genre_counts.keys())
+    data = list(genre_counts.values())
+    return render(request, "graphs_by_gender.html", {
+        "labels": labels,
+        "data": data,
+    })
