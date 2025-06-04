@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}
+    Gráficos por Género
+{% endblock title %}
+{% block content %}
+    <h2 class="mb-4">Cantidad de Juegos por Género</h2>
+    <canvas id="genreChart" width="400" height="200"></canvas>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    const ctx = document.getElementById('genreChart').getContext('2d');
+    const genreChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ labels|safe }},
+            datasets: [{
+                label: 'Cantidad de Juegos',
+                data: {{ data|safe }},
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 }
+                }
+            }
+        }
+    });
+    </script>
+{% endblock content %}
