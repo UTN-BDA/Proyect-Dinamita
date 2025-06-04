@@ -15,11 +15,29 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+DEBUG = True
+
+STATIC_URL = "/static/"
+LOGIN_URL = "login"
+
+LOGIN_REDIRECT_URL = "game_search"
+LOGOUT_REDIRECT_URL = "login"
+
+SESSION_COOKIE_AGE = 30 * 60
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_SECURE = False  # Cambiar a True en producción
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SAMESITE = "Lax"
+
+STATICFILES_DIRS = [BASE_DIR / "games" / "static"]
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
+# TODO: replace this with a secure key in production
 SECRET_KEY = "django-insecure-11g@-5stcp5&02&3t300jp)3mpu8a2vjev1mma%k5pho#zlv_s"
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -48,7 +66,10 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django_session_timeout.middleware.SessionTimeoutMiddleware",
 ]
+
+SESSION_TIMEOUT = 1800
 
 ROOT_URLCONF = "steam_db.urls"
 
@@ -72,7 +93,8 @@ WSGI_APPLICATION = "steam_db.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
+# TODO: fix database settings for production
+# This is a sample configuration for PostgreSQL. Adjust as necessary for your environment.
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
