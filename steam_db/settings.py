@@ -93,7 +93,6 @@ WSGI_APPLICATION = "steam_db.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-# TODO: fix database settings for production
 DATABASES = {
     "default": {
         "ENGINE": os.getenv("DB_ENGINE"),
