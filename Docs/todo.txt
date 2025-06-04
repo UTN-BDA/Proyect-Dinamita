@@ -1,4 +1,4 @@
-- Generar un ainterfaz donde el usuario pueda hacer consultas (si es posible integraar algun grafico con pandas sino nel)
+- Generar un ianterfaz donde el usuario pueda hacer consultas (si es posible integraar algun grafico con pandas sino nel)
 - Permitir al usuario inrgresar datos (juegos)
 - tener un sistema de backup
 - usar consultas parametrizadas
