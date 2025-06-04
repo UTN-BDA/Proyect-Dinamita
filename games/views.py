@@ -38,23 +38,35 @@ def game_search(request):
         filter_kwargs = {f"{selected_field}__icontains": query}
         results = Game.objects.filter(**filter_kwargs)
 
-    return render(request, "query.html", {
-        "fields": fields,
-        "results": results,
-        "selected_field": selected_field,
-        "query": query,
-    })
+    return render(
+        request,
+        "query.html",
+        {
+            "fields": fields,
+            "results": results,
+            "selected_field": selected_field,
+            "query": query,
+        },
+    )
 
+
+@login_required
 def home(request):
     return render(request, "home.html")
 
+
+@login_required
 def all(request):
     games = Game.objects.all()
     return render(request, "all.html", {"games": games})
 
+
+@login_required
 def graphs_home(request):
     return render(request, "graphs_home.html")
 
+
+@login_required
 def graphs_by_gender(request):
     # Obtener todos los géneros de los juegos
     all_genres = []
@@ -65,7 +77,11 @@ def graphs_by_gender(request):
     genre_counts = Counter(all_genres)
     labels = list(genre_counts.keys())
     data = list(genre_counts.values())
-    return render(request, "graphs_by_gender.html", {
-        "labels": labels,
-        "data": data,
-    })
+    return render(
+        request,
+        "graphs_by_gender.html",
+        {
+            "labels": labels,
+            "data": data,
+        },
+    )
