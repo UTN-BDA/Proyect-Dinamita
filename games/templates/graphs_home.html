@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}
+    Graficos
+{% endblock title %}
+{% block content %}
+    <h2 class="mb-4">Seleccione un gráfico</h2>
+    <div class="list-group">
+        <a href="{% url 'graphs_by_gender' %}"
+           class="list-group-item list-group-item-action">Gráficos por Género</a>
+    </div>
+{% endblock content %}
