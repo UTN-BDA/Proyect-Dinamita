@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from .models import Game
 from collections import Counter
+from django.core.paginator import Paginator
 
 
 def game_search(request):
@@ -32,8 +33,21 @@ def home(request):
     return render(request, "home.html")
 
 def all(request):
+    letter_filter = request.GET.get('letter_filter', '').upper()
     games = Game.objects.all()
-    return render(request, "all.html", {"games": games})
+    if letter_filter:
+        games = games.filter(name__istartswith=letter_filter)
+    else:
+        letter_filter = 'A'  # Default to 'A' if no letter is selected
+        games = games.filter(name__istartswith=letter_filter)
+    paginator = Paginator(games, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, "all.html", {
+        "games": page_obj,
+        "letter_filter": letter_filter,
+    })
+
 
 def graphs_home(request):
     return render(request, "graphs_home.html")
