@@ -33,26 +33,20 @@ def home(request):
     return render(request, "home.html")
 
 def all(request):
-    # Obtener todos los generos del modelo Genre
     all_genres = Genre.objects.all()
 
-
-    # Filtrar juegos por valor de genero
     genre_filter = request.GET.get('genre_filter', '')
-    if genre_filter:
-        games = Game.objects.filter(genres__icontains=genre_filter)
-    else:
-        games = Game.objects.all()
-
-    # Filtrar juegos por letra inicial
     letter_filter = request.GET.get('letter_filter', '').upper()
+
     games = Game.objects.all()
+
+    if genre_filter:
+        games = games.filter(genres__name=genre_filter)
     if letter_filter:
         games = games.filter(name__istartswith=letter_filter)
-    else:
-        letter_filter = 'A'  # Default to 'A' if no letter is selected
-        games = games.filter(name__istartswith=letter_filter)
-    games = games.order_by('name')  # Ordenar alfabéticamente por nombre
+    # Elimina el else que fuerza la letra "A"
+
+    games = games.order_by('name')
     paginator = Paginator(games, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -60,6 +54,7 @@ def all(request):
         "games": page_obj,
         "letter_filter": letter_filter,
         "all_genres": all_genres,
+        "genre_filter": genre_filter,
     })
 
 

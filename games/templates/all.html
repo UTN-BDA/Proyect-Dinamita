@@ -11,6 +11,10 @@
     <div class="mb-4">
         <nav aria-label="Filtrar por letra">
             <ul class="pagination justify-content-center flex-wrap">
+                <li class="page-item {% if not letter_filter %}active{% endif %}">
+                    <a class="page-link"
+                       href="{% if genre_filter %}?genre_filter={{ genre_filter }}{% else %}?{% endif %}">Todos</a>
+                </li>
                 {% for char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
                     <li class="page-item {% if letter_filter == char %}active{% endif %}">
                         <a class="page-link" href="?letter_filter={{ char }}">{{ char }}</a>
@@ -27,23 +31,21 @@
                     </li>
                 {% endfor %}
             </ul>
-            <select name="genre_filter"
-                    id="genre_filter"
-                    class="form-select me-2 genre-filter-width"
-                    onchange="this.form.submit()">
+            <form method="get" class="d-inline">
                 <select name="genre_filter"
                         id="genre_filter"
-                        class="form-select me-2"
-                        style="width:auto"
+                        class="form-select me-2 genre-filter-width"
                         onchange="this.form.submit()">
                     <option value="">Todos</option>
                     {% for genre in all_genres %}
-                        <option value="{{ genre }}" {% if genre_filter == genre %}selected{% endif %}>{{ genre }}</option>
+                        <option value="{{ genre.name }}"
+                                {% if genre_filter == genre.name %}selected{% endif %}>{{ genre.name }}</option>
                     {% endfor %}
                 </select>
                 <noscript>
                     <button type="submit" class="btn btn-primary">Filtrar</button>
                 </noscript>
+                {% if letter_filter %}<input type="hidden" name="letter_filter" value="{{ letter_filter }}">{% endif %}
             </form>
         </div>
         <h2 class="mb-4">Todos los Juegos</h2>
@@ -63,7 +65,15 @@
                             <p class="card-text">Desarrolladores: {{ game.developers }}</p>
                             <p class="card-text">Editores: {{ game.publishers }}</p>
                             <p class="card-text">Categorías: {{ game.categories }}</p>
-                            <p class="card-text">Géneros: {{ game.genres }}</p>
+                            <p class="card-text">
+                                Géneros:
+                                {% for genre in game.genres.all %}
+                                    {{ genre.name }}
+                                    {% if not forloop.last %},{% endif %}
+                                {% empty %}
+                                    Sin géneros
+                                {% endfor %}
+                            </p>
                         </div>
                     </div>
                 </div>
