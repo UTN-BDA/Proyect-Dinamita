@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Game
+from .models import Game, Genre
 from collections import Counter
 from django.core.paginator import Paginator
 
@@ -33,6 +33,18 @@ def home(request):
     return render(request, "home.html")
 
 def all(request):
+    # Obtener todos los generos del modelo Genre
+    all_genres = Genre.objects.all()
+
+
+    # Filtrar juegos por valor de genero
+    genre_filter = request.GET.get('genre_filter', '')
+    if genre_filter:
+        games = Game.objects.filter(genres__icontains=genre_filter)
+    else:
+        games = Game.objects.all()
+
+    # Filtrar juegos por letra inicial
     letter_filter = request.GET.get('letter_filter', '').upper()
     games = Game.objects.all()
     if letter_filter:
@@ -47,6 +59,7 @@ def all(request):
     return render(request, "all.html", {
         "games": page_obj,
         "letter_filter": letter_filter,
+        "all_genres": all_genres,
     })
 
 

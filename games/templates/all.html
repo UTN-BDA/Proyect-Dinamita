@@ -3,6 +3,11 @@
     Inicio
 {% endblock title %}
 {% block content %}
+    <style>
+        .genre-filter-width {
+            width: auto;
+        }
+    </style>
     <div class="mb-4">
         <nav aria-label="Filtrar por letra">
             <ul class="pagination justify-content-center flex-wrap">
@@ -22,69 +27,86 @@
                     </li>
                 {% endfor %}
             </ul>
-        </nav>
-    </div>
-    <h2 class="mb-4">Todos los Juegos</h2>
-    <div class="row">
-        {% for game in games %}
-            <div class="col-md-4 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title ">{{ game.name }}</h5>
-                        <p class="card-text">ID de la aplicación: {{ game.app_id }}</p>
-                        <p class="card-text">Fecha de lanzamiento: {{ game.release_date }}</p>
-                        <p class="card-text">Dueños estimados: {{ game.estimated_owners }}</p>
-                        <p class="card-text">Peak CCU: {{ game.peak_ccu }}</p>
-                        <p class="card-text">Edad requerida: {{ game.required_age }}</p>
-                        <p class="card-text">Precio: {{ game.price }}</p>
-                        <p class="card-text">Descripción: {{ game.about_game }}</p>
-                        <p class="card-text">Desarrolladores: {{ game.developers }}</p>
-                        <p class="card-text">Editores: {{ game.publishers }}</p>
-                        <p class="card-text">Categorías: {{ game.categories }}</p>
-                        <p class="card-text">Géneros: {{ game.genres }}</p>
+            <select name="genre_filter"
+                    id="genre_filter"
+                    class="form-select me-2 genre-filter-width"
+                    onchange="this.form.submit()">
+                <select name="genre_filter"
+                        id="genre_filter"
+                        class="form-select me-2"
+                        style="width:auto"
+                        onchange="this.form.submit()">
+                    <option value="">Todos</option>
+                    {% for genre in all_genres %}
+                        <option value="{{ genre }}" {% if genre_filter == genre %}selected{% endif %}>{{ genre }}</option>
+                    {% endfor %}
+                </select>
+                <noscript>
+                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                </noscript>
+            </form>
+        </div>
+        <h2 class="mb-4">Todos los Juegos</h2>
+        <div class="row">
+            {% for game in games %}
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title ">{{ game.name }}</h5>
+                            <p class="card-text">ID de la aplicación: {{ game.app_id }}</p>
+                            <p class="card-text">Fecha de lanzamiento: {{ game.release_date }}</p>
+                            <p class="card-text">Dueños estimados: {{ game.estimated_owners }}</p>
+                            <p class="card-text">Peak CCU: {{ game.peak_ccu }}</p>
+                            <p class="card-text">Edad requerida: {{ game.required_age }}</p>
+                            <p class="card-text">Precio: {{ game.price }}</p>
+                            <p class="card-text">Descripción: {{ game.about_game }}</p>
+                            <p class="card-text">Desarrolladores: {{ game.developers }}</p>
+                            <p class="card-text">Editores: {{ game.publishers }}</p>
+                            <p class="card-text">Categorías: {{ game.categories }}</p>
+                            <p class="card-text">Géneros: {{ game.genres }}</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-        {% endfor %}
-    </div>
-    <!-- Controles de paginación -->
-    {% if games.has_other_pages %}
-        <nav aria-label="Paginación de juegos">
-            <ul class="pagination justify-content-center">
-                {% if games.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link"
-                           href="?page={{ games.previous_page_number }}{% if letter_filter %}&letter_filter={{ letter_filter }}{% endif %}">Anterior</a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link">Anterior</span>
-                    </li>
-                {% endif %}
-                {% for num in games.paginator.page_range %}
-                    {% if games.number == num %}
-                        <li class="page-item active">
-                            <span class="page-link">{{ num }}</span>
-                        </li>
-                    {% elif num > games.number|add:'-3' and num < games.number|add:'3' %}
+            {% endfor %}
+        </div>
+        <!-- Controles de paginación -->
+        {% if games.has_other_pages %}
+            <nav aria-label="Paginación de juegos">
+                <ul class="pagination justify-content-center">
+                    {% if games.has_previous %}
                         <li class="page-item">
                             <a class="page-link"
-                               href="?page={{ num }}{% if letter_filter %}&letter_filter={{ letter_filter }}{% endif %}">{{ num }}</a>
+                               href="?page={{ games.previous_page_number }}{% if letter_filter %}&letter_filter={{ letter_filter }}{% endif %}">Anterior</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Anterior</span>
                         </li>
                     {% endif %}
-                {% endfor %}
-                {% if games.has_next %}
-                    <li class="page-item">
-                        <a class="page-link"
-                           href="?page={{ games.next_page_number }}{% if letter_filter %}&letter_filter={{ letter_filter }}{% endif %}">Siguiente</a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link">Siguiente</span>
-                    </li>
-                {% endif %}
-            </ul>
-        </nav>
-    {% endif %}
-    {% if not games %}<div class="alert alert-warning mt-3">No se encontraron juegos.</div>{% endif %}
-{% endblock content %}
+                    {% for num in games.paginator.page_range %}
+                        {% if games.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > games.number|add:'-3' and num < games.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link"
+                                   href="?page={{ num }}{% if letter_filter %}&letter_filter={{ letter_filter }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if games.has_next %}
+                        <li class="page-item">
+                            <a class="page-link"
+                               href="?page={{ games.next_page_number }}{% if letter_filter %}&letter_filter={{ letter_filter }}{% endif %}">Siguiente</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Siguiente</span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+        {% if not games %}<div class="alert alert-warning mt-3">No se encontraron juegos.</div>{% endif %}
+    {% endblock content %}
