@@ -65,7 +65,7 @@ def graphs_by_gender(request):
     # Contar la cantidad de juegos por género usando la relación ManyToMany
     genre_counts = {}
     for genre in Genre.objects.all():
-        count = genre.games.count()
+        count = genre.games.count() # type: ignore
         if count > 0:
             genre_counts[genre.name] = count
     labels = list(genre_counts.keys())
