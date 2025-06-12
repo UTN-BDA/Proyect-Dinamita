@@ -62,13 +62,12 @@ def graphs_home(request):
     return render(request, "graphs_home.html")
 
 def graphs_by_gender(request):
-    # Obtener todos los géneros de los juegos
-    all_genres = []
-    for game in Game.objects.exclude(genres__isnull=True).exclude(genres=""):
-        # Suponiendo que los géneros están separados por comas
-        if game.genres is not None:
-            all_genres.extend([g.strip() for g in game.genres.split(",") if g.strip()])
-    genre_counts = Counter(all_genres)
+    # Contar la cantidad de juegos por género usando la relación ManyToMany
+    genre_counts = {}
+    for genre in Genre.objects.all():
+        count = genre.games.count()
+        if count > 0:
+            genre_counts[genre.name] = count
     labels = list(genre_counts.keys())
     data = list(genre_counts.values())
     return render(request, "graphs_by_gender.html", {
