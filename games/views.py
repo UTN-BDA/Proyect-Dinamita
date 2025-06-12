@@ -40,6 +40,7 @@ def all(request):
     else:
         letter_filter = 'A'  # Default to 'A' if no letter is selected
         games = games.filter(name__istartswith=letter_filter)
+    games = games.order_by('name')  # Ordenar alfabéticamente por nombre
     paginator = Paginator(games, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)

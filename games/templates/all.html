@@ -6,9 +6,19 @@
     <div class="mb-4">
         <nav aria-label="Filtrar por letra">
             <ul class="pagination justify-content-center flex-wrap">
-                {% for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
-                    <li class="page-item {% if letter_filter == letter %}active{% endif %}">
-                        <a class="page-link" href="?letter_filter={{ letter }}">{{ letter }}</a>
+                {% for char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
+                    <li class="page-item {% if letter_filter == char %}active{% endif %}">
+                        <a class="page-link" href="?letter_filter={{ char }}">{{ char }}</a>
+                    </li>
+                {% endfor %}
+                {% for num in "0123456789" %}
+                    <li class="page-item {% if letter_filter == num %}active{% endif %}">
+                        <a class="page-link" href="?letter_filter={{ num }}">{{ num }}</a>
+                    </li>
+                {% endfor %}
+                {% for special in "!@#$%^&*()-_=+[]{}|;:',.<>/?`~" %}
+                    <li class="page-item {% if letter_filter == special %}active{% endif %}">
+                        <a class="page-link" href="?letter_filter={{ special }}">{{ special }}</a>
                     </li>
                 {% endfor %}
             </ul>
