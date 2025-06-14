@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Restaurar Base de Datos{% endblock title %}
+{% block content %}
+    <h2>Restaurar Base de Datos</h2>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="sql_file" class="form-label">Archivo SQL</label>
+            <input type="file" name="sql_file" id="sql_file" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-danger">Restaurar</button>
+    </form>
+{% endblock content %}
