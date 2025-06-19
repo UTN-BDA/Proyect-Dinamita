@@ -1,9 +1,16 @@
 from django.shortcuts import render, redirect
-from .models import Game
+from .models import Game, Genre
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
 from collections import Counter
+import subprocess
+from django.conf import settings
+from django.http import FileResponse, HttpResponse, HttpResponseRedirect
+from django.urls import reverse
+import os
+from django.contrib import messages
+from django.core.paginator import Paginator
 
 
 def registrar_usuario(request):
@@ -37,6 +44,17 @@ def game_search(request):
         query = request.GET["query"]
         filter_kwargs = {f"{selected_field}__icontains": query}
         results = Game.objects.filter(**filter_kwargs)
+    return render(
+        request,
+        "query.html",
+        {
+            "fields": fields,
+            "results": results,
+            "selected_field": selected_field,
+            "query": query,
+        },
+    )
+
 
     return render(
         request,
@@ -55,10 +73,32 @@ def home(request):
     return render(request, "home.html")
 
 
-@login_required
 def all(request):
+    all_genres = Genre.objects.all()
+
+    genre_filter = request.GET.get('genre_filter', '')
+    letter_filter = request.GET.get('letter_filter', '').upper()
+
     games = Game.objects.all()
-    return render(request, "all.html", {"games": games})
+
+    if genre_filter:
+        games = games.filter(genres__name=genre_filter)
+    if letter_filter:
+        games = games.filter(name__istartswith=letter_filter)
+    # Elimina el else que fuerza la letra "A"
+
+    games = games.order_by('name')
+    paginator = Paginator(games, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, "all.html", {
+        "games": page_obj,
+        "letter_filter": letter_filter,
+        "all_genres": all_genres,
+        "genre_filter": genre_filter,
+    })
+
+
 
 
 @login_required
@@ -66,15 +106,13 @@ def graphs_home(request):
     return render(request, "graphs_home.html")
 
 
-@login_required
 def graphs_by_gender(request):
-    # Obtener todos los géneros de los juegos
-    all_genres = []
-    for game in Game.objects.exclude(genres__isnull=True).exclude(genres=""):
-        # Suponiendo que los géneros están separados por comas
-        if game.genres is not None:
-            all_genres.extend([g.strip() for g in game.genres.split(",") if g.strip()])
-    genre_counts = Counter(all_genres)
+    # Contar la cantidad de juegos por género usando la relación ManyToMany
+    genre_counts = {}
+    for genre in Genre.objects.all():
+        count = genre.games.count() # type: ignore
+        if count > 0:
+            genre_counts[genre.name] = count
     labels = list(genre_counts.keys())
     data = list(genre_counts.values())
     return render(
@@ -85,3 +123,62 @@ def graphs_by_gender(request):
             "data": data,
         },
     )
+
+
+def backup_db(request):
+
+    backup_file = "steamdb_backup.sql"
+    backup_path = os.path.join(settings.BASE_DIR, backup_file)
+    db = settings.DATABASES["default"]
+    cmd = [
+        "pg_dump",
+        "-h",
+        db["HOST"],
+        "-U",
+        db["USER"],
+        "-d",
+        db["NAME"],
+        "-f",
+        backup_path,
+    ]
+    env = os.environ.copy()
+    env["PGPASSWORD"] = db["PASSWORD"]
+    try:
+        subprocess.run(cmd, check=True, env=env)
+        response = FileResponse(
+            open(backup_path, "rb"), as_attachment=True, filename=backup_file
+        )
+        return response
+    except Exception as e:
+        return HttpResponse(f"Error al crear backup: {e}")
+
+
+def restore_db(request):
+
+    if request.method == "POST" and request.FILES.get("sql_file"):
+        sql_file = request.FILES["sql_file"]
+        db = settings.DATABASES["default"]
+        restore_path = os.path.join(settings.BASE_DIR, "restore_temp.sql")
+        with open(restore_path, "wb") as f:
+            for chunk in sql_file.chunks():
+                f.write(chunk)
+        cmd = [
+            "psql",
+            "-h",
+            db["HOST"],
+            "-U",
+            db["USER"],
+            "-d",
+            db["NAME"],
+            "-f",
+            restore_path,
+        ]
+        env = os.environ.copy()
+        env["PGPASSWORD"] = db["PASSWORD"]
+        try:
+            subprocess.run(cmd, check=True, env=env)
+            messages.success(request, "Restauración completada correctamente.")
+        except Exception as e:
+            messages.error(request, f"Error al restaurar: {e}")
+        return HttpResponseRedirect(reverse("home"))
+    return render(request, "restore.html")

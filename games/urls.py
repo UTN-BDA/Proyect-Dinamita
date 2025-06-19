@@ -1,7 +1,14 @@
 from django.urls import path, include
-from .views import game_search, home, all, graphs_home, graphs_by_gender
-from django.contrib.auth import views as auth_views
-from .views import registrar_usuario
+
+from .views import (
+    game_search,
+    home,
+    all,
+    graphs_home,
+    graphs_by_gender,
+    backup_db,
+    restore_db,
+)
 
 urlpatterns = [
     path("", home, name="home"),
@@ -12,4 +19,6 @@ urlpatterns = [
     path("register/", registrar_usuario, name="register"),
     path("login/", auth_views.LoginView.as_view(), name="login"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
+    path("backup/", backup_db, name="backup_db"),
+    path("restore/", restore_db, name="restore_db"),
 ]
