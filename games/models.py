@@ -1,6 +1,10 @@
 from django.db import models
 
+class Genre(models.Model):
+    name = models.CharField(max_length=50, unique=True)
 
+    def __str__(self):
+        return self.name
 class Game(models.Model):
     app_id = models.CharField(max_length=20, unique=True)
     name = models.CharField(max_length=255)
@@ -13,10 +17,13 @@ class Game(models.Model):
     developers = models.TextField(null=True, blank=True)
     publishers = models.TextField(null=True, blank=True)
     categories = models.TextField(null=True, blank=True)
-    genres = models.TextField(null=True, blank=True)
+    # genres = models.TextField(null=True, blank=True)
     tags = models.TextField(null=True, blank=True)
     screenshots = models.TextField(null=True, blank=True)
     movies = models.TextField(null=True, blank=True)
+    genres = models.ManyToManyField(Genre, related_name="games", blank=True)
+
 
     def __str__(self):
         return self.name
+
