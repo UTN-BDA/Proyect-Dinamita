@@ -18,3 +18,5 @@ Este proyecto busca simular la base de datos de una distribuidora de videojuegos
 - Cisneros, Franscisco
 - Guzman, Dana
 - Sola Bru, Marcelo
+
+https://www.kaggle.com/datasets/fronkongames/steam-games-dataset/data

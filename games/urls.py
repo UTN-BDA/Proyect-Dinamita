@@ -1,4 +1,5 @@
 from django.urls import path, include
+from django.contrib.auth import views as auth_views
 
 from .views import (
     game_search,
@@ -8,6 +9,7 @@ from .views import (
     graphs_by_gender,
     backup_db,
     restore_db,
+    registrar_usuario,
 )
 
 urlpatterns = [
