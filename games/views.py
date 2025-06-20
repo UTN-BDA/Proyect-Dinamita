@@ -1,9 +1,8 @@
 from django.shortcuts import render, redirect
-from .models import Game, Genre
+from .models import Games, Genres
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
-from collections import Counter
 import subprocess
 from django.conf import settings
 from django.http import FileResponse, HttpResponse, HttpResponseRedirect
@@ -43,19 +42,7 @@ def game_search(request):
         selected_field = request.GET["field"]
         query = request.GET["query"]
         filter_kwargs = {f"{selected_field}__icontains": query}
-        results = Game.objects.filter(**filter_kwargs)
-    return render(
-        request,
-        "query.html",
-        {
-            "fields": fields,
-            "results": results,
-            "selected_field": selected_field,
-            "query": query,
-        },
-    )
-
-
+        results = Games.objects.filter(**filter_kwargs)  # Fixed: use Game, not Games
     return render(
         request,
         "query.html",
@@ -74,12 +61,12 @@ def home(request):
 
 
 def all(request):
-    all_genres = Genre.objects.all()
+    all_genres = Genres.objects.all()
 
-    genre_filter = request.GET.get('genre_filter', '')
-    letter_filter = request.GET.get('letter_filter', '').upper()
+    genre_filter = request.GET.get("genre_filter", "")
+    letter_filter = request.GET.get("letter_filter", "").upper()
 
-    games = Game.objects.all()
+    games = Games.objects.all()
 
     if genre_filter:
         games = games.filter(genres__name=genre_filter)
@@ -87,18 +74,20 @@ def all(request):
         games = games.filter(name__istartswith=letter_filter)
     # Elimina el else que fuerza la letra "A"
 
-    games = games.order_by('name')
+    games = games.order_by("name")
     paginator = Paginator(games, 10)
-    page_number = request.GET.get('page')
+    page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
-    return render(request, "all.html", {
-        "games": page_obj,
-        "letter_filter": letter_filter,
-        "all_genres": all_genres,
-        "genre_filter": genre_filter,
-    })
-
-
+    return render(
+        request,
+        "all.html",
+        {
+            "games": page_obj,
+            "letter_filter": letter_filter,
+            "all_genres": all_genres,
+            "genre_filter": genre_filter,
+        },
+    )
 
 
 @login_required
@@ -109,10 +98,10 @@ def graphs_home(request):
 def graphs_by_gender(request):
     # Contar la cantidad de juegos por género usando la relación ManyToMany
     genre_counts = {}
-    for genre in Genre.objects.all():
-        count = genre.games.count() # type: ignore
+    for genre in Genres.objects.all():
+        count = genre.games.count()  # type: ignore
         if count > 0:
-            genre_counts[genre.name] = count
+            genre_counts[genre.genre] = count
     labels = list(genre_counts.keys())
     data = list(genre_counts.values())
     return render(
@@ -126,7 +115,7 @@ def graphs_by_gender(request):
 
 
 def backup_db(request):
-
+    # 'request' is required by Django view signature even if not used
     backup_file = "steamdb_backup.sql"
     backup_path = os.path.join(settings.BASE_DIR, backup_file)
     db = settings.DATABASES["default"]
