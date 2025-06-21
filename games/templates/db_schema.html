@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}
+    Esquema de la Base de Datos
+{% endblock title %}
+{% block content %}
+    <h2 class="mb-4">Diagrama Entidad-Relación (ER)</h2>
+    <div class="container">
+        <div class="row">
+            {% for model in models_info %}
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-primary text-white">
+                            <strong>{{ model.model }}</strong>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Campos</h6>
+                            <ul class="list-group list-group-flush mb-2">
+                                {% for field in model.fields %}<li class="list-group-item py-1">{{ field }}</li>{% endfor %}
+                            </ul>
+                            {% if model.foreign_keys %}
+                                <h6 class="card-subtitle mt-2 mb-1 text-info">Foreign Keys</h6>
+                                <ul class="list-group list-group-flush mb-2">
+                                    {% for fk in model.foreign_keys %}
+                                        <li class="list-group-item py-1">
+                                            <span class="badge bg-primary me-2">FK</span>{{ fk }}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                            {% if model.many_to_many %}
+                                <h6 class="card-subtitle mt-2 mb-1 text-warning">ManyToMany</h6>
+                                <ul class="list-group list-group-flush">
+                                    {% for m2m in model.many_to_many %}
+                                        <li class="list-group-item py-1">
+                                            <span class="badge bg-warning text-dark me-2">M2M</span>{{ m2m }}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="mt-3">
+        <span style="display:inline-block;
+                     width:20px;
+                     height:4px;
+                     background:#3498db;
+                     margin-right:5px"></span> ForeignKey
+        <span style="display:inline-block;
+                     width:20px;
+                     height:4px;
+                     background:#f39c12;
+                     margin-left:20px;
+                     margin-right:5px"></span> ManyToMany
+    </div>
+{% endblock content %}

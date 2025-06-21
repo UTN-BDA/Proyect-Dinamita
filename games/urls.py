@@ -10,6 +10,7 @@ from .views import (
     backup_db,
     restore_db,
     registrar_usuario,
+    view_db_schema,
 )
 
 urlpatterns = [
@@ -23,4 +24,5 @@ urlpatterns = [
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("backup/", backup_db, name="backup_db"),
     path("restore/", restore_db, name="restore_db"),
+    path("db_schema/", view_db_schema, name="db_schema"),
 ]

@@ -96,14 +96,17 @@ def graphs_home(request):
 
 
 def graphs_by_gender(request):
-    # Contar la cantidad de juegos por género usando la relación ManyToMany
-    genre_counts = {}
-    for genre in Genres.objects.all():
-        count = genre.games.count()  # type: ignore
-        if count > 0:
-            genre_counts[genre.genre] = count
-    labels = list(genre_counts.keys())
-    data = list(genre_counts.values())
+    # Contar la cantidad de juegos por género usando el modelo actual
+    from django.db.models import Count
+
+    genre_counts = (
+        Genres.objects.values("genre")
+        .annotate(count=Count("app", distinct=True))
+        .filter(genre__isnull=False)
+        .order_by("-count")
+    )
+    labels = [g["genre"] for g in genre_counts]
+    data = [g["count"] for g in genre_counts]
     return render(
         request,
         "graphs_by_gender.html",
@@ -143,7 +146,6 @@ def backup_db(request):
 
 
 def restore_db(request):
-
     if request.method == "POST" and request.FILES.get("sql_file"):
         sql_file = request.FILES["sql_file"]
         db = settings.DATABASES["default"]
@@ -171,3 +173,36 @@ def restore_db(request):
             messages.error(request, f"Error al restaurar: {e}")
         return HttpResponseRedirect(reverse("home"))
     return render(request, "restore.html")
+
+
+def view_db_schema(request):
+    from django.apps import apps
+    from django.db import models
+
+    models_info = []
+    for model in apps.get_models():
+        model_name = model.__name__
+        fields = []
+        fks = []
+        m2ms = []
+        for field in model._meta.get_fields():
+            if isinstance(field, models.ForeignKey):
+                fks.append(f"{field.name} → {field.related_model.__name__}")
+            elif isinstance(field, models.ManyToManyField):
+                m2ms.append(f"{field.name} ↔ {field.related_model.__name__}")
+            elif hasattr(field, "attname"):
+                fields.append(field.attname)
+        models_info.append(
+            {
+                "model": model_name,
+                "fields": fields,
+                "foreign_keys": fks,
+                "many_to_many": m2ms,
+            }
+        )
+    svg_height = (len(models_info) + 1) * 120
+    return render(
+        request,
+        "db_schema.html",
+        {"models_info": models_info, "svg_height": svg_height},
+    )
