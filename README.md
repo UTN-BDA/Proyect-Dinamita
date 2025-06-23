@@ -2,16 +2,20 @@
 
 Este proyecto busca simular la base de datos de una distribuidora de videojuegos digital, la base de datos posee miles de items con los cuales trabajar.
 
-# Instrucciones para iniciar el proyecto y luego importar los datos desde el CSV
+# Instrucciones para iniciar el proyecto (localmente) y luego importar los datos
 
-1. Iniciar un entorno virtual con Python.
-2. Instalar los `requirements.txt`.
-3. Deben tener el dataset descargado en formato "CSV".
-4. Abrir el archivo `import_games.py`.(Proyect-Dinamita\games\management\commands\import_games.py).
-5. Reemplazar la ruta (línea 61) por defecto por su ruta donde tenga el CSV.
-6. En la consola poner los siguientes comandos.
-   - `python manage.py migrate`
-   - `python manage.py import_games`
+## Requisitos previos
+
+1. IDE (VS Code es recomendado).
+2. PostgreSQL.
+3. Python.
+4. Navegador web.
+
+## ¿Cómo iniciarlo?
+
+1. Clonar el repositorio desde github, ya sea utilizando el comando `clone` o descargando el `zip`.
+2. RECOMENDADO: crear un entorno virtual para no instalar ningun paquete de forma local ya que puede ocasionar conflictos con otros paquetes.
+3.
 
 # Miembros del equipo
 
