@@ -116,7 +116,9 @@ Accede en el navegador a `http://127.0.0.1:8000/`.
 
 ## Importación de datos
 
-Este proyecto incluye varios CSV y un backup en formato TAR.
+Nota: Los archivos CSV y el backup no están incluidos en este repositorio. Descárgalos manualmente desde Kaggle:
+
+https://www.kaggle.com/datasets/frangcisneros/games-dataset-for-bda
 
 ### Lista de archivos CSV
 
@@ -215,4 +217,26 @@ python manage.py runserver
 
 ---
 
-_Última actualización: 23 de junio de 2025_
+Limitaciones conocidas
+
+Algunas funcionalidades aún están en desarrollo y pueden no funcionar correctamente. A continuación, el estado actual:
+
+✅ Generación de gráficos.
+
+✅ Iniciar sesión y cerrar sesión.
+
+✅ Visualización del esquema de la base de datos.
+
+❌ Búsqueda de juegos.
+
+❌ Listar todos los juegos.
+
+❌ Descargar backup desde la aplicación.
+
+❌ Restaurar backup desde la aplicación.
+
+Aunque ciertas features no estén disponibles, el proyecto se levanta sin problemas siguiendo los pasos anteriores.
+
+---
+
+Última actualización: 23 de junio de 2025
