@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Backup Base de Datos{% endblock title %}
+{% block content %}
+    <h2>Backup de Base de Datos</h2>
+    <p class="text-muted">Selecciona las tablas que deseas incluir en el backup</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="mb-4">
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="select_all" onclick="toggleAll(this)">
+                <label class="form-check-label fw-bold" for="select_all">
+                    Seleccionar todas las tablas
+                </label>
+            </div>
+            <hr>
+        </div>
+        
+        <div class="row">
+            {% for table in available_tables %}
+                <div class="col-md-6 col-lg-4 mb-2">
+                    <div class="form-check">
+                        <input type="checkbox" 
+                               class="form-check-input table-checkbox" 
+                               name="selected_tables" 
+                               value="{{ table.db_table }}" 
+                               id="table_{{ forloop.counter }}">
+                        <label class="form-check-label" for="table_{{ forloop.counter }}">
+                            {{ table.model_name }}
+                            <small class="text-muted d-block">{{ table.db_table }}</small>
+                        </label>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <div class="mt-4">
+            <div class="mb-3">
+                <label for="backup_name" class="form-label">Nombre del archivo de backup (opcional)</label>
+                <input type="text" 
+                       class="form-control" 
+                       id="backup_name" 
+                       name="backup_name" 
+                       placeholder="backup_{{ current_date }}.sql">
+                <div class="form-text">Si no especificas un nombre, se generará automáticamente.</div>
+            </div>
+            
+            <div class="mb-3">
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="include_data" name="include_data" checked>
+                    <label class="form-check-label" for="include_data">
+                        Incluir datos (no solo estructura)
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-warning" id="backup-btn">
+                <i class="fas fa-download"></i> Crear Backup
+            </button>
+            <a href="{% url 'home' %}" class="btn btn-secondary">Cancelar</a>
+            <a href="{% url 'backup_help' %}" class="btn btn-info">❓ Ayuda</a>
+        </div>
+    </form>
+
+    <script>
+        function toggleAll(source) {
+            const checkboxes = document.querySelectorAll('.table-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = source.checked;
+            });
+        }
+        
+        // Actualizar el checkbox "Seleccionar todas" basado en los checkboxes individuales
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectAll = document.getElementById('select_all');
+            const tableCheckboxes = document.querySelectorAll('.table-checkbox');
+            
+            tableCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const checkedBoxes = document.querySelectorAll('.table-checkbox:checked');
+                    selectAll.checked = checkedBoxes.length === tableCheckboxes.length;
+                    selectAll.indeterminate = checkedBoxes.length > 0 && checkedBoxes.length < tableCheckboxes.length;
+                });
+            });
+            
+            // Validar que al menos una tabla esté seleccionada
+            document.querySelector('form').addEventListener('submit', function(e) {
+                const checkedBoxes = document.querySelectorAll('.table-checkbox:checked');
+                if (checkedBoxes.length === 0) {
+                    e.preventDefault();
+                    alert('Debes seleccionar al menos una tabla para hacer el backup.');
+                }
+            });
+        });
+    </script>
+{% endblock content %}
