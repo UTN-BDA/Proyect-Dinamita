@@ -67,6 +67,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_session_timeout.middleware.SessionTimeoutMiddleware",
+    "games.middleware.QueryTimeMiddleware",
 ]
 
 SESSION_TIMEOUT = 1800
@@ -83,6 +84,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "games.context_processors.database_context",
             ],
         },
     },
@@ -102,8 +104,25 @@ DATABASES = {
         "HOST": os.getenv("DB_HOST"),
         "PORT": os.getenv("DB_PORT"),
         "OPTIONS": {"options": "-c search_path=steam,public"},
-    }
+    },
+    "mongodb": {
+        "ENGINE": "djongo",
+        "NAME": os.getenv("MONGO_DB_NAME", "steam_games_db"),
+        "CLIENT": {
+            "host": os.getenv("MONGO_URI", "mongodb://localhost:27017"),
+            "username": os.getenv("MONGO_USER", ""),
+            "password": os.getenv("MONGO_PASSWORD", ""),
+            "authSource": os.getenv("MONGO_AUTH_SOURCE", "admin"),
+            "authMechanism": "SCRAM-SHA-1",
+        },
+    },
 }
+
+# Configuración de MongoDB
+MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "steam_games_db")
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
+MONGO_USER = os.getenv("MONGO_USER", "")
+MONGO_PASSWORD = os.getenv("MONGO_PASSWORD", "")
 
 
 # Password validation

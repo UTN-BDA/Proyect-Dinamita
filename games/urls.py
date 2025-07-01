@@ -11,6 +11,8 @@ from .views import (
     restore_db,
     registrar_usuario,
     view_db_schema,
+    switch_database,
+    database_status,
 )
 
 urlpatterns = [
@@ -25,4 +27,6 @@ urlpatterns = [
     path("backup/", backup_db, name="backup_db"),
     path("restore/", restore_db, name="restore_db"),
     path("db_schema/", view_db_schema, name="db_schema"),
+    path("switch-database/", switch_database, name="switch_database"),
+    path("database-status/", database_status, name="database_status"),
 ]

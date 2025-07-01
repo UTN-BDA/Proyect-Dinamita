@@ -38,8 +38,13 @@
                         onchange="this.form.submit()">
                     <option value="">Todos</option>
                     {% for genre in all_genres %}
-                        <option value="{{ genre.name }}"
-                                {% if genre_filter == genre.name %}selected{% endif %}>{{ genre.name }}</option>
+                        {% if db_type == 'mongodb' %}
+                            <option value="{{ genre.genre }}"
+                                    {% if genre_filter == genre.genre %}selected{% endif %}>{{ genre.genre }}</option>
+                        {% else %}
+                            <option value="{{ genre.name }}"
+                                    {% if genre_filter == genre.name %}selected{% endif %}>{{ genre.name }}</option>
+                        {% endif %}
                     {% endfor %}
                 </select>
                 <noscript>
@@ -58,58 +63,76 @@
                         <h5 class="card-title ">{{ game.name }}</h5>
                         <p class="card-text">ID de la aplicación: {{ game.app_id }}</p>
                         <p class="card-text">Fecha de lanzamiento: {{ game.release_date }}</p>
-                        <p class="card-text">Dueños estimados: {{ game.estimated_owners }}</p>
-                        <p class="card-text">Peak CCU: {{ game.peak_ccu }}</p>
-                        <p class="card-text">Edad requerida: {{ game.required_age }}</p>
-                        <p class="card-text">Precio: {{ game.price }}</p>
-                        <p class="card-text">Descripción: {{ game.about_game }}</p>
-                        <p class="card-text">Desarrolladores: {{ game.developers }}</p>
-                        <p class="card-text">Editores: {{ game.publishers }}</p>
-                        <p class="card-text">Categorías: {{ game.categories }}</p>
-                        <p class="card-text">
-                            Géneros:
-                            {% for genre in game.genres.all %}
-                                {{ genre.name }}
-                                {% if not forloop.last %},{% endif %}
-                            {% empty %}
-                                Sin géneros
-                            {% endfor %}
-                        </p>
+                        {% if db_type == 'mongodb' %}
+                            <p class="card-text">Dueños estimados: {{ game.estimated_owners }}</p>
+                            <p class="card-text">Edad requerida: {{ game.required_age }}</p>
+                            <p class="card-text">Precio: ${{ game.price|default:"N/A" }}</p>
+                            <p class="card-text">Descripción: {{ game.about_the_game|truncatewords:20 }}</p>
+                            <p class="card-text">Desarrolladores: 
+                                {% for dev in game.developers %}{{ dev }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                            </p>
+                            <p class="card-text">Editores: 
+                                {% for pub in game.publishers %}{{ pub }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                            </p>
+                            <p class="card-text">Géneros: 
+                                {% for genre in game.genres %}{{ genre }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                            </p>
+                        {% else %}
+                            <p class="card-text">Dueños estimados: {{ game.estimated_owners }}</p>
+                            <p class="card-text">Peak CCU: {{ game.peak_ccu }}</p>
+                            <p class="card-text">Edad requerida: {{ game.required_age }}</p>
+                            <p class="card-text">Precio: {{ game.price }}</p>
+                            <p class="card-text">Descripción: {{ game.about_game }}</p>
+                            <p class="card-text">Desarrolladores: {{ game.developers }}</p>
+                            <p class="card-text">Editores: {{ game.publishers }}</p>
+                            <p class="card-text">Categorías: {{ game.categories }}</p>
+                            <p class="card-text">
+                                Géneros:
+                                {% for genre in game.genres.all %}
+                                    {{ genre.name }}
+                                    {% if not forloop.last %},{% endif %}
+                                {% empty %}
+                                    Sin géneros
+                                {% endfor %}
+                            </p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         {% endfor %}
     </div>
     <!-- Controles de paginación -->
-    {% if games.has_other_pages %}
+    {% if page_obj.has_previous or page_obj.has_next %}
         <nav aria-label="Paginación de juegos">
             <ul class="pagination justify-content-center">
-                {% if games.has_previous %}
+                {% if page_obj.has_previous %}
                     <li class="page-item">
                         <a class="page-link"
-                           href="?page={{ games.previous_page_number }}{% if letter_filter %}&letter_filter={{ letter_filter }}{% endif %}">Anterior</a>
+                           href="?page={{ page_obj.previous_page_number }}{% if letter_filter %}&letter_filter={{ letter_filter }}{% endif %}{% if genre_filter %}&genre_filter={{ genre_filter }}{% endif %}">Anterior</a>
                     </li>
                 {% else %}
                     <li class="page-item disabled">
                         <span class="page-link">Anterior</span>
                     </li>
                 {% endif %}
-                {% for num in games.paginator.page_range %}
-                    {% if games.number == num %}
+                
+                {% for num in page_obj.num_pages|make_list %}
+                    {% if page_obj.page_number == forloop.counter %}
                         <li class="page-item active">
-                            <span class="page-link">{{ num }}</span>
+                            <span class="page-link">{{ forloop.counter }}</span>
                         </li>
-                    {% elif num > games.number|add:'-3' and num < games.number|add:'3' %}
+                    {% elif forloop.counter > page_obj.page_number|add:'-3' and forloop.counter < page_obj.page_number|add:'3' %}
                         <li class="page-item">
                             <a class="page-link"
-                               href="?page={{ num }}{% if letter_filter %}&letter_filter={{ letter_filter }}{% endif %}">{{ num }}</a>
+                               href="?page={{ forloop.counter }}{% if letter_filter %}&letter_filter={{ letter_filter }}{% endif %}{% if genre_filter %}&genre_filter={{ genre_filter }}{% endif %}">{{ forloop.counter }}</a>
                         </li>
                     {% endif %}
                 {% endfor %}
-                {% if games.has_next %}
+                
+                {% if page_obj.has_next %}
                     <li class="page-item">
                         <a class="page-link"
-                           href="?page={{ games.next_page_number }}{% if letter_filter %}&letter_filter={{ letter_filter }}{% endif %}">Siguiente</a>
+                           href="?page={{ page_obj.next_page_number }}{% if letter_filter %}&letter_filter={{ letter_filter }}{% endif %}{% if genre_filter %}&genre_filter={{ genre_filter }}{% endif %}">Siguiente</a>
                     </li>
                 {% else %}
                     <li class="page-item disabled">

@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Estado de Bases de Datos{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Estado de Bases de Datos</h1>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Base de Datos Relacional (PostgreSQL)</h3>
+                </div>
+                <div class="card-body">
+                    <p><strong>Estado:</strong> 
+                        {% if relational_connected %}
+                            <span class="badge bg-success">Conectado</span>
+                        {% else %}
+                            <span class="badge bg-danger">Desconectado</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Cantidad de juegos:</strong> {{ relational_count }}</p>
+                    {% if current_db == 'relational' %}
+                        <p><span class="badge bg-primary">En uso actualmente</span></p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Base de Datos NoSQL (MongoDB)</h3>
+                </div>
+                <div class="card-body">
+                    <p><strong>Estado:</strong> 
+                        {% if mongo_connected %}
+                            <span class="badge bg-success">Conectado</span>
+                        {% else %}
+                            <span class="badge bg-danger">Desconectado</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Cantidad de juegos:</strong> {{ mongo_count }}</p>
+                    {% if current_db == 'mongodb' %}
+                        <p><span class="badge bg-primary">En uso actualmente</span></p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-4">
+        <h3>Cambiar Base de Datos</h3>
+        <form method="post" action="{% url 'switch_database' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="db_type">Seleccionar base de datos:</label>
+                <select name="db_type" id="db_type" class="form-control" style="width: 300px;">
+                    <option value="relational" {% if current_db == 'relational' %}selected{% endif %}>
+                        Base de Datos Relacional (PostgreSQL)
+                    </option>
+                    <option value="mongodb" {% if current_db == 'mongodb' %}selected{% endif %}>
+                        Base de Datos NoSQL (MongoDB)
+                    </option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Cambiar Base de Datos</button>
+        </form>
+    </div>
+    
+    {% if not mongo_connected and mongo_count == 0 %}
+    <div class="alert alert-warning mt-4">
+        <h4>Cargar datos en MongoDB</h4>
+        <p>Para usar MongoDB, primero necesitas cargar los datos. Ejecuta el siguiente comando en la terminal:</p>
+        <code>python manage.py load_mongodb</code>
+    </div>
+    {% endif %}
+    
+    <div class="mt-4">
+        <a href="{% url 'home' %}" class="btn btn-secondary">Volver al inicio</a>
+    </div>
+</div>
+{% endblock %}

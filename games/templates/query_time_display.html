@@ -1,0 +1,28 @@
+{% if query_time %}
+<div class="alert alert-info alert-dismissible fade show mb-3" role="alert">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-stopwatch me-2"></i>
+                <strong>Tiempo de consulta:</strong>
+                <span class="ms-2 badge bg-info">
+                    {{ formatted_time }}
+                </span>
+                {% if db_type == 'mongodb' %}
+                    <span class="badge bg-success ms-2">MongoDB</span>
+                {% else %}
+                    <span class="badge bg-primary ms-2">PostgreSQL</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-4 text-end">
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </div>
+    <div class="mt-2">
+        <small class="text-muted">
+            💡 <strong>Tip:</strong> Compara el rendimiento cambiando entre bases de datos usando el botón "Cambiar BD"
+        </small>
+    </div>
+</div>
+{% endif %}
