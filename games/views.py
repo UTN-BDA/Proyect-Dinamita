@@ -46,18 +46,6 @@ def home(request):
     return render(request, "home.html", context)
 
 
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.decorators import login_required
-import subprocess
-from django.conf import settings
-from django.http import FileResponse, HttpResponse, HttpResponseRedirect
-from django.urls import reverse
-import os
-from django.contrib import messages
-from django.core.paginator import Paginator
-from .database_service import DatabaseService
-
-
 @login_required
 def game_search(request):
     # Calcular el tiempo de procesamiento hasta este punto
@@ -105,12 +93,17 @@ def game_search(request):
 
 
 def all(request):
+    # Marcar tiempo de inicio específico para esta vista
+    view_start_time = time.time()
+
     # Obtener el tipo de base de datos de la sesión
     db_type = request.session.get("db_type", "relational")
     db_service = DatabaseService(db_type)
 
-    # Obtener todos los géneros
+    # Medir tiempo de obtener géneros
+    genres_start = time.time()
     all_genres = db_service.get_all_genres()
+    genres_time = round((time.time() - genres_start) * 1000, 2)
 
     # Obtener filtros
     genre_filter = request.GET.get("genre_filter", "")
@@ -122,13 +115,26 @@ def all(request):
     except ValueError:
         page = 1
 
-    # Obtener juegos con paginación
+    # Medir tiempo de obtener juegos con paginación
+    games_start = time.time()
     page_data = db_service.get_all_games(
         page=page,
         per_page=10,
         genre_filter=genre_filter if genre_filter else None,
         letter_filter=letter_filter if letter_filter else None,
     )
+    games_query_time = db_service.get_last_query_time()  # Tiempo puro de BD
+    games_processing_time = round(
+        (time.time() - games_start) * 1000, 2
+    )  # Tiempo total incluyendo procesamiento
+
+    # Calcular el tiempo total de procesamiento de la vista
+    view_processing_time = round((time.time() - view_start_time) * 1000, 2)
+
+    # También calcular el tiempo desde el middleware si existe
+    total_response_time = None
+    if hasattr(request, "start_time"):
+        total_response_time = round((time.time() - request.start_time) * 1000, 2)
 
     context = {
         "games": page_data["games"],
@@ -137,7 +143,12 @@ def all(request):
         "genre_filter": genre_filter,
         "db_type": db_type,
         "page_obj": page_data,  # Para mantener compatibilidad con el template
-        "query_time": db_service.get_last_query_time(),
+        "query_time": games_query_time,  # Tiempo puro de la consulta BD
+        "genres_time": genres_time,  # Tiempo para obtener géneros
+        "games_processing_time": games_processing_time,  # Tiempo total de procesamiento de juegos
+        "view_processing_time": view_processing_time,  # Tiempo total de la vista
+        "total_response_time": total_response_time,  # Tiempo desde middleware
+        "current_db_type": db_type,
     }
 
     return render(request, "all.html", context)

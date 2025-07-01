@@ -32,18 +32,13 @@ def format_query_time(value):
 
 
 @register.inclusion_tag("query_time_display.html")
-def show_query_time(query_time, db_type):
-    """Template tag para mostrar el tiempo de consulta con estilo"""
-    # Si no hay query_time, no mostrar nada
-    if not query_time:
-        return {
-            "query_time": None,
-            "db_type": db_type or "relational",
-            "formatted_time": "",
-        }
-
+def show_query_time(
+    query_time=None, db_type=None, total_response_time=None, view_processing_time=None
+):
+    """Template tag para mostrar el tiempo de consulta y procesamiento con estilo"""
     return {
         "query_time": query_time,
         "db_type": db_type or "relational",
-        "formatted_time": format_query_time(query_time),
+        "total_response_time": total_response_time,
+        "view_processing_time": view_processing_time,
     }

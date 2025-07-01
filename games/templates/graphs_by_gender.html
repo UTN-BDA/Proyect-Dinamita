@@ -1,10 +1,16 @@
 {% extends "base.html" %}
+{% load database_tags %}
 {% block title %}
     Gráficos por Género
 {% endblock title %}
 {% block content %}
     <h2 class="mb-4">Cantidad de Juegos por Género</h2>
+    
+    <!-- Mostrar tiempo de carga -->
+    {% show_query_time query_time db_type %}
+    
     <canvas id="genreChart" width="400" height="200"></canvas>
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
     const ctx = document.getElementById('genreChart').getContext('2d');

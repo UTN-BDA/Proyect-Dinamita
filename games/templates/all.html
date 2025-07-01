@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load database_tags %}
 {% block title %}
     Inicio
 {% endblock title %}
@@ -8,6 +9,10 @@
             width: auto;
         }
     </style>
+    
+    <!-- Mostrar tiempos de carga -->
+    {% show_query_time query_time db_type total_response_time view_processing_time %}
+    
     <div class="mb-4">
         <nav aria-label="Filtrar por letra">
             <ul class="pagination justify-content-center flex-wrap">
