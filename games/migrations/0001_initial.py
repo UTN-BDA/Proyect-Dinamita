@@ -88,7 +88,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name="AudioLanguages",
+            name="audio_languages",
             fields=[
                 (
                     "id",
@@ -115,7 +115,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name="AboutGame",
+            name="about_game",
             fields=[
                 (
                     "id",
@@ -375,7 +375,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name="ScoresAndRanks",
+            name="scores_and_ranks",
             fields=[
                 (
                     "id",
