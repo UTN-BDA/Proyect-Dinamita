@@ -9,6 +9,8 @@ from .views import (
     graphs_by_gender,
     backup_db,
     restore_db,
+    backup_management,
+    backup_help,
     registrar_usuario,
     view_db_schema,
 )
@@ -24,5 +26,7 @@ urlpatterns = [
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("backup/", backup_db, name="backup_db"),
     path("restore/", restore_db, name="restore_db"),
+    path("backup-management/", backup_management, name="backup_management"),
+    path("backup-help/", backup_help, name="backup_help"),
     path("db_schema/", view_db_schema, name="db_schema"),
 ]

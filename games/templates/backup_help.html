@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Ayuda - Backup y Restore{% endblock title %}
+{% block content %}
+    <div class="row">
+        <div class="col-lg-8">
+            <h2>Guía de Backup y Restore</h2>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">📋 Descripción General</h5>
+                </div>
+                <div class="card-body">
+                    <p>El sistema de backup y restore te permite crear copias de seguridad personalizadas de tu base de datos Steam y restaurarlas cuando sea necesario.</p>
+                    
+                    <h6>Características principales:</h6>
+                    <ul>
+                        <li><strong>Backup Selectivo:</strong> Elige qué tablas incluir</li>
+                        <li><strong>Opciones Flexibles:</strong> Solo estructura o estructura + datos</li>
+                        <li><strong>Nombres Personalizados:</strong> Asigna nombres específicos</li>
+                        <li><strong>Restore Seguro:</strong> Múltiples confirmaciones y validaciones</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">💾 Crear Backup</h5>
+                </div>
+                <div class="card-body">
+                    <ol>
+                        <li><strong>Accede a la página de backup</strong> desde el menú principal</li>
+                        <li><strong>Selecciona las tablas</strong> que quieres incluir:
+                            <ul>
+                                <li>Usa "Seleccionar todas" para incluir todo</li>
+                                <li>O marca individualmente las que necesites</li>
+                            </ul>
+                        </li>
+                        <li><strong>Configura las opciones:</strong>
+                            <ul>
+                                <li><em>Nombre del archivo:</em> Déjalo vacío para generar automáticamente</li>
+                                <li><em>Incluir datos:</em> Marca si quieres los datos además de la estructura</li>
+                            </ul>
+                        </li>
+                        <li><strong>Haz clic en "Crear Backup"</strong> y el archivo se descargará automáticamente</li>
+                    </ol>
+
+                    <div class="alert alert-info">
+                        <strong>💡 Consejo:</strong> Para backups regulares, incluye todas las tablas con datos. Para desarrollo, puedes hacer backups de solo estructura.
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">📥 Restaurar Backup</h5>
+                </div>
+                <div class="card-body">
+                    <ol>
+                        <li><strong>Accede a la página de restore</strong> desde el menú principal</li>
+                        <li><strong>Selecciona el archivo SQL</strong> de backup que quieres restaurar</li>
+                        <li><strong>Configura las opciones:</strong>
+                            <ul>
+                                <li><em>Limpiar tablas:</em> Elimina datos existentes antes de restaurar (recomendado para evitar duplicados)</li>
+                            </ul>
+                        </li>
+                        <li><strong>Confirma</strong> que entiendes las implicaciones</li>
+                        <li><strong>Haz clic en "Restaurar"</strong> y confirma una vez más</li>
+                    </ol>
+
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Importante:</strong> Siempre haz un backup antes de restaurar. La operación puede sobrescribir datos existentes.
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">🛡️ Seguridad y Buenas Prácticas</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Antes del Backup:</h6>
+                    <ul>
+                        <li>Asegúrate de estar autenticado en el sistema</li>
+                        <li>Verifica que tienes suficiente espacio en disco</li>
+                        <li>Considera hacer backup en horarios de menor actividad</li>
+                    </ul>
+
+                    <h6>Antes del Restore:</h6>
+                    <ul>
+                        <li><strong>¡SIEMPRE haz un backup de la base actual!</strong></li>
+                        <li>Verifica que el archivo SQL sea válido y compatible</li>
+                        <li>Prueba primero en un entorno de desarrollo</li>
+                        <li>Asegúrate de que nadie más esté usando el sistema</li>
+                    </ul>
+
+                    <h6>Nomenclatura Recomendada:</h6>
+                    <ul>
+                        <li><code>backup_produccion_YYYYMMDD.sql</code> - Para backups de producción</li>
+                        <li><code>backup_desarrollo_YYYYMMDD.sql</code> - Para desarrollo</li>
+                        <li><code>backup_migracion_v2.0.sql</code> - Para migraciones específicas</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">🚀 Accesos Rápidos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'backup_db' %}" class="btn btn-warning">Crear Backup</a>
+                        <a href="{% url 'restore_db' %}" class="btn btn-danger">Restaurar Backup</a>
+                        <a href="{% url 'backup_management' %}" class="btn btn-info">Gestión de Backups</a>
+                        <a href="{% url 'db_schema' %}" class="btn btn-secondary">Esquema de BD</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">📊 Tablas Disponibles</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Tabla</th>
+                                    <th>Descripción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>games</td><td>Información principal</td></tr>
+                                <tr><td>genres</td><td>Géneros</td></tr>
+                                <tr><td>developers</td><td>Desarrolladores</td></tr>
+                                <tr><td>publishers</td><td>Editores</td></tr>
+                                <tr><td>categories</td><td>Categorías</td></tr>
+                                <tr><td>platforms</td><td>Plataformas</td></tr>
+                                <tr><td>languages</td><td>Idiomas</td></tr>
+                                <tr><td>audio_languages</td><td>Audio</td></tr>
+                                <tr><td>about_game</td><td>Descripciones</td></tr>
+                                <tr><td>metacritic</td><td>Puntuaciones</td></tr>
+                                <tr><td>scores_and_ranks</td><td>Rankings</td></tr>
+                                <tr><td>reviews</td><td>Reseñas</td></tr>
+                                <tr><td>playtime</td><td>Tiempo de juego</td></tr>
+                                <tr><td>packages</td><td>Paquetes</td></tr>
+                                <tr><td>urls</td><td>Enlaces</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">❓ Problemas Comunes</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Error de conexión:</h6>
+                    <p class="small">Verifica la configuración de PostgreSQL en settings.py</p>
+
+                    <h6>Archivo vacío:</h6>
+                    <p class="small">Las tablas seleccionadas pueden no tener datos</p>
+
+                    <h6>Error al restaurar:</h6>
+                    <p class="small">Verifica que el archivo SQL sea válido y compatible</p>
+
+                    <h6>Problema con foreign keys:</h6>
+                    <p class="small">Usa la opción "limpiar tablas" que maneja CASCADE automáticamente</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{% url 'home' %}" class="btn btn-secondary">← Volver al Inicio</a>
+    </div>
+{% endblock content %}
