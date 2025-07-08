@@ -13,6 +13,11 @@ from .views import (
     backup_help,
     registrar_usuario,
     view_db_schema,
+    game_management_home,
+    create_game,
+    search_and_edit_game,
+    edit_game,
+    complete_description,
 )
 
 urlpatterns = [
@@ -29,4 +34,14 @@ urlpatterns = [
     path("backup-management/", backup_management, name="backup_management"),
     path("backup-help/", backup_help, name="backup_help"),
     path("db_schema/", view_db_schema, name="db_schema"),
+    # URLs para gestión de juegos (transacciones)
+    path("games/", game_management_home, name="game_management_home"),
+    path("games/create/", create_game, name="create_game"),
+    path("games/search/", search_and_edit_game, name="search_and_edit_game"),
+    path("games/edit/<str:app_id>/", edit_game, name="edit_game"),
+    path(
+        "games/description/<str:app_id>/",
+        complete_description,
+        name="complete_description",
+    ),
 ]
