@@ -3,13 +3,65 @@
     Inicio
 {% endblock title %}
 {% block content %}
-    <h2 class="mb-4">Bienvenido a la Página de Inicio</h2>
-    <div class="mt-4">
-        <a href="{% url 'game_search' %}" class="btn btn-primary">Buscar Juegos</a>
-        <a href="{% url 'all_games' %}" class="btn btn-secondary">Ver Todos los Juegos</a>
-        <a href="{% url 'graphs_home' %}" class="btn btn-success">Ver Gráficos</a>
-        <a href="{% url 'backup_db' %}" class="btn btn-warning">Descargar Backup</a>
-        <a href="{% url 'restore_db' %}" class="btn btn-danger">Restaurar Backup</a>
-        <a href="{% url 'db_schema' %}" class="btn btn-info">Esquema de la Base de Datos</a>
+    <h2 class="mb-4">Bienvenido a SteamDB</h2>
+    
+    <!-- Sección de Gestión de Juegos (Transacciones) -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="mb-3">🎮 Gestión de Juegos</h4>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'game_management_home' %}" class="btn btn-primary">
+                    <i class="bi bi-gear"></i> Centro de Gestión
+                </a>
+                <a href="{% url 'create_game' %}" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> Crear Nuevo Juego
+                </a>
+                <a href="{% url 'search_and_edit_game' %}" class="btn btn-warning">
+                    <i class="bi bi-pencil"></i> Editar Juegos
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Separador -->
+    <hr class="my-4">
+    
+    <!-- Sección de Consultas y Reportes -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="mb-3">📊 Consultas y Reportes</h4>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'game_search' %}" class="btn btn-info">
+                    <i class="bi bi-search"></i> Buscar Juegos
+                </a>
+                <a href="{% url 'all_games' %}" class="btn btn-secondary">
+                    <i class="bi bi-list"></i> Ver Todos los Juegos
+                </a>
+                <a href="{% url 'graphs_home' %}" class="btn btn-dark">
+                    <i class="bi bi-bar-chart"></i> Ver Gráficos
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Separador -->
+    <hr class="my-4">
+    
+    <!-- Sección de Administración -->
+    <div class="row">
+        <div class="col-12">
+            <h4 class="mb-3">⚙️ Administración del Sistema</h4>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'backup_db' %}" class="btn btn-warning">
+                    <i class="bi bi-download"></i> Descargar Backup
+                </a>
+                <a href="{% url 'restore_db' %}" class="btn btn-danger">
+                    <i class="bi bi-upload"></i> Restaurar Backup
+                </a>
+                <a href="{% url 'db_schema' %}" class="btn btn-outline-info">
+                    <i class="bi bi-diagram-3"></i> Esquema de BD
+                </a>
+            </div>
+        </div>
     </div>
 {% endblock content %}
