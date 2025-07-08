@@ -21,7 +21,13 @@ from .search_views import (
 
 from .analytics_views import graphs_by_gender
 
-from .admin_views import backup_db, restore_db, view_db_schema
+from .admin_views import (
+    backup_db,
+    restore_db,
+    backup_management,
+    backup_help,
+    view_db_schema,
+)
 
 # Re-exportar todas las vistas para mantener compatibilidad con el sistema existente
 __all__ = [
@@ -38,5 +44,7 @@ __all__ = [
     "graphs_by_gender",
     "backup_db",
     "restore_db",
+    "backup_management",
+    "backup_help",
     "view_db_schema",
 ]

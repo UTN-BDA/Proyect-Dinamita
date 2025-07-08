@@ -53,11 +53,8 @@
         <div class="col-12">
             <h4 class="mb-3">⚙️ Administración del Sistema</h4>
             <div class="d-flex flex-wrap gap-2">
-                <a href="{% url 'backup_db' %}" class="btn btn-warning">
-                    <i class="bi bi-download"></i> Descargar Backup
-                </a>
-                <a href="{% url 'restore_db' %}" class="btn btn-danger">
-                    <i class="bi bi-upload"></i> Restaurar Backup
+                <a href="{% url 'backup_management' %}" class="btn btn-primary">
+                    <i class="bi bi-gear"></i> Gestión de Backups
                 </a>
                 <a href="{% url 'db_schema' %}" class="btn btn-outline-info">
                     <i class="bi bi-diagram-3"></i> Esquema de BD

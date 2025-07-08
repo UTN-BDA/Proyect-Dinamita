@@ -19,7 +19,7 @@ class DatabaseBackupService:
 
     @staticmethod
     def create_backup():
-        """Crea backup de la base de datos"""
+        """Crea backup completo de la base de datos"""
         backup_file = "steamdb_backup.sql"
         backup_path = os.path.join(settings.BASE_DIR, backup_file)
         db = settings.DATABASES["default"]
@@ -41,6 +41,42 @@ class DatabaseBackupService:
 
         subprocess.run(cmd, check=True, env=env)
         return backup_path, backup_file
+
+    @staticmethod
+    def create_selective_backup(selected_tables, backup_name=None, include_data=True):
+        """Crea backup selectivo de tablas específicas"""
+        if not backup_name:
+            timestamp = __import__('datetime').datetime.now().strftime('%Y%m%d_%H%M%S')
+            backup_name = f"steamdb_selective_backup_{timestamp}.sql"
+        
+        if not backup_name.endswith('.sql'):
+            backup_name += '.sql'
+            
+        backup_path = os.path.join(settings.BASE_DIR, backup_name)
+        db = settings.DATABASES["default"]
+
+        # Construir comando pg_dump con tablas específicas
+        cmd = [
+            "pg_dump",
+            "-h", db["HOST"],
+            "-U", db["USER"],
+            "-d", db["NAME"],
+            "-f", backup_path,
+        ]
+        
+        # Agregar opciones según configuración
+        if not include_data:
+            cmd.append("--schema-only")
+        
+        # Agregar tablas específicas
+        for table in selected_tables:
+            cmd.extend(["-t", table])
+
+        env = os.environ.copy()
+        env["PGPASSWORD"] = db["PASSWORD"]
+
+        subprocess.run(cmd, check=True, env=env)
+        return backup_path, backup_name
 
     @staticmethod
     def restore_backup(sql_file):
@@ -108,19 +144,57 @@ class DatabaseSchemaService:
             "many_to_many": many_to_many,
         }
 
+    @staticmethod
+    def get_available_tables():
+        """Obtiene información de tablas disponibles para backup"""
+        tables = []
+        for model in apps.get_models():
+            tables.append(
+                {
+                    "model_name": model.__name__,
+                    "db_table": model._meta.db_table,
+                }
+            )
+        return tables
+
 
 # Vistas que usan los servicios
 
 
 def backup_db(request):
     """Vista para crear backup de la base de datos"""
-    try:
-        backup_path, backup_file = DatabaseBackupService.create_backup()
-        return FileResponse(
-            open(backup_path, "rb"), as_attachment=True, filename=backup_file
-        )
-    except Exception as e:
-        return HttpResponse(f"Error al crear backup: {e}")
+    if request.method == "POST":
+        try:
+            # Procesar el formulario de backup
+            selected_tables = request.POST.getlist('selected_tables')
+            backup_name = request.POST.get('backup_name', '').strip()
+            include_data = request.POST.get('include_data') == 'on'
+            
+            if not selected_tables:
+                messages.error(request, "Debes seleccionar al menos una tabla para hacer el backup.")
+                return redirect('backup_db')
+            
+            # Crear backup personalizado
+            backup_path, backup_file = DatabaseBackupService.create_selective_backup(
+                selected_tables, backup_name, include_data
+            )
+            
+            return FileResponse(
+                open(backup_path, "rb"), as_attachment=True, filename=backup_file
+            )
+        except Exception as e:
+            messages.error(request, f"Error al crear backup: {e}")
+            return redirect('backup_db')
+    
+    # GET: Mostrar formulario de selección de tablas
+    available_tables = DatabaseSchemaService.get_available_tables()
+    
+    context = {
+        'available_tables': available_tables,
+        'current_date': __import__('datetime').datetime.now().strftime('%Y%m%d_%H%M%S')
+    }
+    
+    return render(request, "backup.html", context)
 
 
 def restore_db(request):
@@ -136,6 +210,22 @@ def restore_db(request):
         return HttpResponseRedirect(reverse("home"))
 
     return render(request, "restore.html")
+
+
+def backup_management(request):
+    """Vista para gestión de backups - Panel de control"""
+    available_tables = DatabaseSchemaService.get_available_tables()
+
+    context = {
+        "available_tables": available_tables,
+    }
+
+    return render(request, "backup_management.html", context)
+
+
+def backup_help(request):
+    """Vista para ayuda sobre backup y restore"""
+    return render(request, "backup_help.html")
 
 
 def view_db_schema(request):
