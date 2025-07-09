@@ -1,8 +1,3 @@
-"""
-Vistas para autenticación y navegación básica
-Aplicando KISS principle - Keep It Simple, Stupid
-"""
-
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
@@ -12,7 +7,6 @@ from ..handlers import ResponseHelper
 
 
 def registrar_usuario(request):
-    """Vista para registro de usuarios - Simplificada"""
     if request.method == "POST":
         form = UserCreationForm(request.POST)
         if form.is_valid():
@@ -27,11 +21,9 @@ def registrar_usuario(request):
 
 @login_required
 def home(request):
-    """Vista principal - Minimalista"""
     return ResponseHelper.simple_render(request, "home.html")
 
 
 @login_required
 def graphs_home(request):
-    """Vista de gráficos - Minimalista"""
     return ResponseHelper.simple_render(request, "graphs_home.html")

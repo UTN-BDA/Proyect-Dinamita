@@ -1,8 +1,3 @@
-"""
-Vistas especializadas para gestión de juegos
-Aplicando Single Responsibility Principle
-"""
-
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -15,13 +10,11 @@ from ..services import TransactionService, GameService, AboutGameService, GenreS
 
 @login_required
 def game_management_home(request):
-    """Vista principal para gestión de juegos - Simple y enfocada"""
     return render(request, "game_management/home.html")
 
 
 @login_required
 def create_game(request):
-    """Vista para crear un nuevo juego - Simplificada"""
     if request.method == "POST":
         game_form = GameForm(request.POST)
         description_form = AboutGameForm(request.POST)

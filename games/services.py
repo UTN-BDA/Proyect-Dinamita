@@ -5,8 +5,6 @@ from typing import Dict, List, Optional
 
 
 class GameService:
-    """Servicio para gestionar operaciones de juegos (Single Responsibility Principle)"""
-
     @staticmethod
     def create_game(game_data: Dict) -> Games:
         """Crea un nuevo juego con validaciones"""

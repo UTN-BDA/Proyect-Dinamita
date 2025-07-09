@@ -1,8 +1,3 @@
-"""
-Handlers para manejar la lógica común de formularios y responses
-Aplicando principios DRY y Single Responsibility
-"""
-
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -10,7 +5,6 @@ from typing import Dict, List, Optional, Any, Callable
 
 
 class FormHandler:
-    """Manejador genérico de formularios aplicando DRY principle"""
 
     @staticmethod
     def handle_form_submission(
@@ -22,18 +16,7 @@ class FormHandler:
         template_name: str,
         context: Dict = None,
     ):
-        """
-        Maneja la submisión de formularios de manera genérica
 
-        Args:
-            request: HttpRequest object
-            forms: Dict con las clases/instancias de formularios
-            success_callback: Función a ejecutar si todos los formularios son válidos
-            success_message: Mensaje de éxito
-            redirect_url: URL de redirección tras éxito
-            template_name: Template a renderizar
-            context: Contexto adicional para el template
-        """
         if request.method == "POST":
             return FormHandler._handle_post_request(
                 request,
@@ -59,7 +42,6 @@ class FormHandler:
         template_name,
         context,
     ):
-        """Maneja requests POST"""
         # Crear formularios con datos POST o ejecutar funciones lambda
         post_forms = {}
         for key, form_definition in forms.items():
@@ -103,11 +85,9 @@ class FormHandler:
 
 
 class GenreProcessor:
-    """Procesador especializado para géneros (Single Responsibility)"""
 
     @staticmethod
     def process_genres_from_form(genre_form) -> List[str]:
-        """Procesa géneros desde formulario"""
         if genre_form.is_valid() and genre_form.cleaned_data.get("genres"):
             return [g.strip() for g in genre_form.cleaned_data["genres"].split(",")]
         return []
