@@ -27,6 +27,7 @@ from .admin_views import (
     backup_management,
     backup_help,
     view_db_schema,
+    index_management,
 )
 
 # Re-exportar todas las vistas para mantener compatibilidad con el sistema existente
@@ -47,4 +48,5 @@ __all__ = [
     "backup_management",
     "backup_help",
     "view_db_schema",
+    "index_management",
 ]
