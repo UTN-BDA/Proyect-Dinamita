@@ -85,6 +85,10 @@ class MongoDBService:
                     "median_playtime_forever": game_data.get("median_playtime_forever"),
                     "median_playtime_2weeks": game_data.get("median_playtime_2weeks"),
                     "estimated_owners": game_data.get("estimated_owners"),
+                    # Nuevos campos
+                    "packages": game_data.get("packages", []),
+                    "reviews": game_data.get("reviews"),
+                    "urls": game_data.get("urls", {}),
                 }
 
                 games_to_insert.append(game_doc)
@@ -121,6 +125,9 @@ class MongoDBService:
             self.collection.create_index("release_date")
             self.collection.create_index("genres")
             self.collection.create_index("developers")
+            # Opcional: índices para nuevos campos si se busca por ellos
+            # self.collection.create_index("reviews")
+            # self.collection.create_index("urls.website")
             print("Índices creados exitosamente")
         except Exception as e:
             print(f"Error creando índices: {e}")

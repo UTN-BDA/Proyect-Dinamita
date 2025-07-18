@@ -6,8 +6,8 @@
 {% block content %}
     <h2 class="mb-4">Cantidad de Juegos por Género</h2>
     
-    <!-- Mostrar tiempo de carga -->
-    {% show_query_time query_time db_type %}
+    <!-- Mostrar tiempo de carga de la página -->
+    {% show_query_time total_response_time=total_response_time db_type=db_type %}
     
     <canvas id="genreChart" width="400" height="200"></canvas>
     

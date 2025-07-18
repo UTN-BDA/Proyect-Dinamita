@@ -1,18 +1,10 @@
-{% if query_time or total_response_time or view_processing_time %}
+{% if total_response_time %}
 <div class="alert alert-info alert-dismissible fade show mb-3" role="alert">
     <div class="d-flex align-items-center justify-content-between">
         <div>
             <i class="bi bi-stopwatch me-2"></i>
-            <strong>Tiempos de carga:</strong>
-            {% if query_time %}
-                <span class="ms-2 badge bg-secondary">Consulta BD: {{ query_time }} ms</span>
-            {% endif %}
-            {% if view_processing_time %}
-                <span class="ms-2 badge bg-warning">Procesamiento Vista: {{ view_processing_time }} ms</span>
-            {% endif %}
-            {% if total_response_time %}
-                <span class="ms-2 badge bg-info">Total: {{ total_response_time }} ms</span>
-            {% endif %}
+            <strong>Tiempo total de carga de página:</strong>
+            <span class="ms-2 badge bg-info">{{ total_response_time }}ms</span>
             {% if db_type == 'mongodb' %}
                 <span class="badge bg-success ms-2">MongoDB</span>
             {% else %}
@@ -21,5 +13,18 @@
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
+    {% if total_response_time > 1000 %}
+        <small class="text-muted d-block mt-1">
+            <i class="bi bi-exclamation-triangle"></i> La página tardó más de 1 segundo en cargar
+        </small>
+    {% elif total_response_time > 500 %}
+        <small class="text-muted d-block mt-1">
+            <i class="bi bi-info-circle"></i> Tiempo de carga normal
+        </small>
+    {% else %}
+        <small class="text-muted d-block mt-1">
+            <i class="bi bi-check-circle"></i> Tiempo de carga rápido
+        </small>
+    {% endif %}
 </div>
 {% endif %}

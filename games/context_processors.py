@@ -4,7 +4,7 @@ def database_context(request):
         "current_db_type": request.session.get("db_type", "relational"),
     }
 
-    # Agregar tiempo total de respuesta si está disponible
+    # Agregar tiempo total de respuesta si está disponible en el request
     if hasattr(request, "total_response_time"):
         context["total_response_time"] = request.total_response_time
 

@@ -10,8 +10,8 @@
         }
     </style>
     
-    <!-- Mostrar tiempos de carga -->
-    {% show_query_time query_time db_type total_response_time view_processing_time %}
+    <!-- Mostrar tiempo de carga de la página -->
+    {% show_query_time total_response_time=total_response_time db_type=db_type %}
     
     <div class="mb-4">
         <nav aria-label="Filtrar por letra">

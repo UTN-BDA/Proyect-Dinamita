@@ -28,18 +28,11 @@ def registrar_usuario(request):
 
 @login_required
 def home(request):
-    # Calcular el tiempo de procesamiento hasta este punto
-    if hasattr(request, "start_time"):
-        processing_time = round((time.time() - request.start_time) * 1000, 2)
-    else:
-        processing_time = None
-
     # Obtener el tipo de base de datos seleccionado desde la sesión
     db_type = request.session.get("db_type", "relational")
 
     context = {
         "db_type": db_type,
-        "total_response_time": processing_time,
         "current_db_type": db_type,
     }
 
@@ -48,12 +41,6 @@ def home(request):
 
 @login_required
 def game_search(request):
-    # Calcular el tiempo de procesamiento hasta este punto
-    if hasattr(request, "start_time"):
-        processing_time = round((time.time() - request.start_time) * 1000, 2)
-    else:
-        processing_time = None
-
     # Obtener el tipo de base de datos de la sesión
     db_type = request.session.get("db_type", "relational")
     db_service = DatabaseService(db_type)
@@ -85,7 +72,6 @@ def game_search(request):
             "selected_field": selected_field,
             "query": query,
             "db_type": db_type,
-            "total_response_time": processing_time,
             "current_db_type": db_type,
             "query_time": db_service.get_last_query_time(),
         },
@@ -93,17 +79,15 @@ def game_search(request):
 
 
 def all(request):
-    # Marcar tiempo de inicio específico para esta vista
-    view_start_time = time.time()
+    # Marcar el tiempo de inicio de la vista
+    start_time = time.perf_counter()
 
     # Obtener el tipo de base de datos de la sesión
     db_type = request.session.get("db_type", "relational")
     db_service = DatabaseService(db_type)
 
-    # Medir tiempo de obtener géneros
-    genres_start = time.time()
+    # Obtener géneros
     all_genres = db_service.get_all_genres()
-    genres_time = round((time.time() - genres_start) * 1000, 2)
 
     # Obtener filtros
     genre_filter = request.GET.get("genre_filter", "")
@@ -115,26 +99,17 @@ def all(request):
     except ValueError:
         page = 1
 
-    # Medir tiempo de obtener juegos con paginación
-    games_start = time.time()
+    # Obtener juegos con paginación
     page_data = db_service.get_all_games(
         page=page,
         per_page=10,
         genre_filter=genre_filter if genre_filter else None,
         letter_filter=letter_filter if letter_filter else None,
     )
-    games_query_time = db_service.get_last_query_time()  # Tiempo puro de BD
-    games_processing_time = round(
-        (time.time() - games_start) * 1000, 2
-    )  # Tiempo total incluyendo procesamiento
 
-    # Calcular el tiempo total de procesamiento de la vista
-    view_processing_time = round((time.time() - view_start_time) * 1000, 2)
-
-    # También calcular el tiempo desde el middleware si existe
-    total_response_time = None
-    if hasattr(request, "start_time"):
-        total_response_time = round((time.time() - request.start_time) * 1000, 2)
+    # Calcular el tiempo total de la vista
+    end_time = time.perf_counter()
+    total_response_time = round((end_time - start_time) * 1000, 3)
 
     context = {
         "games": page_data["games"],
@@ -142,13 +117,9 @@ def all(request):
         "all_genres": all_genres,
         "genre_filter": genre_filter,
         "db_type": db_type,
-        "page_obj": page_data,  # Para mantener compatibilidad con el template
-        "query_time": games_query_time,  # Tiempo puro de la consulta BD
-        "genres_time": genres_time,  # Tiempo para obtener géneros
-        "games_processing_time": games_processing_time,  # Tiempo total de procesamiento de juegos
-        "view_processing_time": view_processing_time,  # Tiempo total de la vista
-        "total_response_time": total_response_time,  # Tiempo desde middleware
+        "page_obj": page_data,
         "current_db_type": db_type,
+        "total_response_time": total_response_time,
     }
 
     return render(request, "all.html", context)
@@ -221,12 +192,19 @@ def database_status(request):
 
 
 def graphs_by_gender(request):
+    # Marcar el tiempo de inicio de la vista
+    start_time = time.perf_counter()
+
     # Obtener el tipo de base de datos de la sesión
     db_type = request.session.get("db_type", "relational")
     db_service = DatabaseService(db_type)
 
     # Obtener estadísticas de géneros
     genre_stats = db_service.get_genre_statistics()
+
+    # Calcular el tiempo total de la vista
+    end_time = time.perf_counter()
+    total_response_time = round((end_time - start_time) * 1000, 3)
 
     return render(
         request,
@@ -235,7 +213,7 @@ def graphs_by_gender(request):
             "labels": genre_stats["labels"],
             "data": genre_stats["data"],
             "db_type": db_type,
-            "query_time": db_service.get_last_query_time(),
+            "total_response_time": total_response_time,
         },
     )
 

@@ -1,0 +1,77 @@
+<!-- Template para medir el tiempo real de carga de página -->
+<div id="performance-info" class="alert alert-info alert-dismissible fade show mb-3" role="alert" style="display: none;">
+    <div class="d-flex align-items-center justify-content-between">
+        <div>
+            <i class="bi bi-stopwatch me-2"></i>
+            <strong>Tiempo real de carga de página:</strong>
+            <span id="page-load-time" class="ms-2 badge bg-info">Calculando...</span>
+            {% if db_type == 'mongodb' %}
+                <span class="badge bg-success ms-2">MongoDB</span>
+            {% else %}
+                <span class="badge bg-primary ms-2">PostgreSQL</span>
+            {% endif %}
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div id="performance-details" class="mt-2">
+        <small class="text-muted">
+            <div>Backend: <span id="backend-time" class="badge bg-secondary">{{ total_response_time|default:"N/A" }}ms</span></div>
+            <div>Renderizado: <span id="render-time" class="badge bg-secondary">Calculando...</span></div>
+            <div id="performance-status" class="mt-1"></div>
+        </small>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Obtener métricas de performance del navegador
+    function measurePagePerformance() {
+        // Usar Performance API del navegador
+        const perfData = performance.getEntriesByType('navigation')[0];
+        
+        if (perfData) {
+            // Tiempo total desde el inicio de navegación hasta que la página está completamente cargada
+            const totalLoadTime = perfData.loadEventEnd - perfData.navigationStart;
+            
+            // Tiempo de renderizado (desde que se recibe la respuesta hasta que se completa la carga)
+            const renderTime = perfData.loadEventEnd - perfData.responseEnd;
+            
+            // Tiempo del backend (desde request hasta response)
+            const backendTime = perfData.responseEnd - perfData.requestStart;
+            
+            // Mostrar los resultados
+            document.getElementById('page-load-time').textContent = Math.round(totalLoadTime) + 'ms';
+            document.getElementById('render-time').textContent = Math.round(renderTime) + 'ms';
+            document.getElementById('backend-time').textContent = Math.round(backendTime) + 'ms';
+            
+            // Mostrar estado de performance
+            const statusEl = document.getElementById('performance-status');
+            if (totalLoadTime > 5000) {
+                statusEl.innerHTML = '<i class="bi bi-exclamation-triangle text-danger"></i> Página muy lenta (>5s)';
+            } else if (totalLoadTime > 2000) {
+                statusEl.innerHTML = '<i class="bi bi-exclamation-triangle text-warning"></i> Página lenta (>2s)';
+            } else if (totalLoadTime > 1000) {
+                statusEl.innerHTML = '<i class="bi bi-info-circle text-info"></i> Tiempo de carga normal (>1s)';
+            } else {
+                statusEl.innerHTML = '<i class="bi bi-check-circle text-success"></i> Página rápida (<1s)';
+            }
+            
+            // Mostrar la información
+            document.getElementById('performance-info').style.display = 'block';
+        } else {
+            // Fallback: usar timestamp simple
+            const loadTime = Date.now() - window.performance.timing.navigationStart;
+            document.getElementById('page-load-time').textContent = loadTime + 'ms';
+            document.getElementById('render-time').textContent = 'N/A';
+            document.getElementById('performance-info').style.display = 'block';
+        }
+    }
+    
+    // Esperar a que la página esté completamente cargada
+    if (document.readyState === 'complete') {
+        measurePagePerformance();
+    } else {
+        window.addEventListener('load', measurePagePerformance);
+    }
+});
+</script>

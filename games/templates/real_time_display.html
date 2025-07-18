@@ -1,0 +1,88 @@
+<!-- Template para medir tiempo real de carga de página -->
+<div id="page-timer" class="alert alert-info alert-dismissible fade show mb-3" role="alert" style="display: none;">
+    <div class="d-flex align-items-center justify-content-between">
+        <div>
+            <i class="bi bi-stopwatch me-2"></i>
+            <strong>Tiempo real de carga:</strong>
+            <span id="load-time-display" class="ms-2 badge bg-warning text-dark">Midiendo...</span>
+            {% if db_type == 'mongodb' %}
+                <span class="badge bg-success ms-2">MongoDB</span>
+            {% else %}
+                <span class="badge bg-primary ms-2">PostgreSQL</span>
+            {% endif %}
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <small id="load-description" class="text-muted d-block mt-1">
+        <i class="bi bi-info-circle"></i> Midiendo tiempo desde que se inició la carga hasta que terminó completamente
+    </small>
+</div>
+
+<script>
+(function() {
+    // Marcar tiempo de inicio
+    const navigationStart = performance.timing.navigationStart || Date.now();
+    
+    function updateTimer() {
+        const currentTime = Date.now();
+        const elapsedTime = currentTime - navigationStart;
+        
+        const timerElement = document.getElementById('load-time-display');
+        const descElement = document.getElementById('load-description');
+        
+        if (timerElement) {
+            timerElement.textContent = Math.round(elapsedTime) + 'ms';
+            timerElement.className = 'ms-2 badge bg-warning text-dark';
+        }
+    }
+    
+    function finalizeTimer() {
+        const loadEndTime = performance.timing.loadEventEnd || Date.now();
+        const totalTime = loadEndTime - navigationStart;
+        
+        const timerElement = document.getElementById('load-time-display');
+        const descElement = document.getElementById('load-description');
+        const containerElement = document.getElementById('page-timer');
+        
+        if (timerElement && descElement && containerElement) {
+            timerElement.textContent = Math.round(totalTime) + 'ms';
+            
+            // Cambiar color según el tiempo
+            if (totalTime > 5000) {
+                timerElement.className = 'ms-2 badge bg-danger';
+                descElement.innerHTML = '<i class="bi bi-exclamation-triangle text-danger"></i> Página muy lenta (más de 5 segundos)';
+            } else if (totalTime > 2000) {
+                timerElement.className = 'ms-2 badge bg-warning text-dark';
+                descElement.innerHTML = '<i class="bi bi-exclamation-triangle text-warning"></i> Página lenta (más de 2 segundos)';
+            } else if (totalTime > 1000) {
+                timerElement.className = 'ms-2 badge bg-info';
+                descElement.innerHTML = '<i class="bi bi-info-circle text-info"></i> Tiempo de carga normal (más de 1 segundo)';
+            } else {
+                timerElement.className = 'ms-2 badge bg-success';
+                descElement.innerHTML = '<i class="bi bi-check-circle text-success"></i> Página rápida (menos de 1 segundo)';
+            }
+            
+            // Mostrar el contenedor
+            containerElement.style.display = 'block';
+        }
+    }
+    
+    // Mostrar el timer inmediatamente
+    document.getElementById('page-timer').style.display = 'block';
+    
+    // Actualizar cada 100ms hasta que termine la carga
+    const interval = setInterval(updateTimer, 100);
+    
+    // Cuando la página esté completamente cargada
+    function onComplete() {
+        clearInterval(interval);
+        setTimeout(finalizeTimer, 100); // Pequeño delay para asegurar que todo esté terminado
+    }
+    
+    if (document.readyState === 'complete') {
+        onComplete();
+    } else {
+        window.addEventListener('load', onComplete);
+    }
+})();
+</script>

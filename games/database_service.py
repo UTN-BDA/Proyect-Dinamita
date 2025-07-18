@@ -25,12 +25,12 @@ class DatabaseService:
 
     def _measure_time(self, func, *args, **kwargs):
         """Medir el tiempo de ejecución de una función"""
-        start_time = time.time()
+        start_time = time.perf_counter()  # Más preciso que time.time()
         result = func(*args, **kwargs)
-        end_time = time.time()
+        end_time = time.perf_counter()
         self.last_query_time = round(
-            (end_time - start_time) * 1000, 2
-        )  # en milisegundos
+            (end_time - start_time) * 1000, 3
+        )  # 3 decimales para más precisión
         return result
 
     def get_all_games(self, page=1, per_page=10, genre_filter=None, letter_filter=None):
@@ -121,11 +121,14 @@ class DatabaseService:
         if letter_filter:
             query["name"] = {"$regex": f"^{letter_filter}", "$options": "i"}
 
-        # Conectar y obtener datos
-        if not self.mongo_service.connect() or not self.mongo_service.collection:
+        # Conectar primero (tiempo de conexión no cuenta)
+        if not self.mongo_service.connect() or self.mongo_service.collection is None:
             return self._empty_page_result()
 
         try:
+            # SOLO medir el tiempo de las operaciones de base de datos
+            start_time = time.perf_counter()
+
             # Contar total de documentos
             total_count = self.mongo_service.collection.count_documents(query)
 
@@ -137,6 +140,9 @@ class DatabaseService:
                 .limit(per_page)
             )
             games = list(games_cursor)
+
+            end_time = time.perf_counter()
+            self.last_query_time = round((end_time - start_time) * 1000, 3)
 
             # Calcular información de paginación
             total_pages = (total_count + per_page - 1) // per_page
@@ -163,15 +169,38 @@ class DatabaseService:
     def _search_mongo_games(self, field, query):
         """Buscar en MongoDB"""
         if field == "name":
-            return self.mongo_service.search_games(query)
-        else:
-            # Para otros campos, crear una búsqueda más genérica
-            if not self.mongo_service.connect() or not self.mongo_service.collection:
+            # Conectar primero
+            if (
+                not self.mongo_service.connect()
+                or self.mongo_service.collection is None
+            ):
                 return []
 
             try:
+                # Medir solo la consulta
+                start_time = time.perf_counter()
+                mongo_query = {"name": {"$regex": query, "$options": "i"}}
+                results = list(self.mongo_service.collection.find(mongo_query))
+                end_time = time.perf_counter()
+                self.last_query_time = round((end_time - start_time) * 1000, 3)
+                return results
+            finally:
+                self.mongo_service.disconnect()
+        else:
+            # Para otros campos, crear una búsqueda más genérica
+            if (
+                not self.mongo_service.connect()
+                or self.mongo_service.collection is None
+            ):
+                return []
+
+            try:
+                start_time = time.perf_counter()
                 mongo_query = {field: {"$regex": query, "$options": "i"}}
-                return list(self.mongo_service.collection.find(mongo_query))
+                results = list(self.mongo_service.collection.find(mongo_query))
+                end_time = time.perf_counter()
+                self.last_query_time = round((end_time - start_time) * 1000, 3)
+                return results
             finally:
                 self.mongo_service.disconnect()
 
@@ -193,10 +222,13 @@ class DatabaseService:
 
     def _get_mongo_genre_stats(self):
         """Obtener estadísticas de géneros de MongoDB"""
-        if not self.mongo_service.connect() or not self.mongo_service.collection:
+        if not self.mongo_service.connect() or self.mongo_service.collection is None:
             return {"labels": [], "data": []}
 
         try:
+            # Medir solo la agregación
+            start_time = time.perf_counter()
+
             # Agregación para contar juegos por género
             pipeline = [
                 {"$unwind": "$genres"},
@@ -205,6 +237,9 @@ class DatabaseService:
             ]
 
             results = list(self.mongo_service.collection.aggregate(pipeline))
+
+            end_time = time.perf_counter()
+            self.last_query_time = round((end_time - start_time) * 1000, 3)
 
             labels = [result["_id"] for result in results if result["_id"]]
             data = [result["count"] for result in results if result["_id"]]
@@ -215,12 +250,16 @@ class DatabaseService:
 
     def _get_mongo_genres(self):
         """Obtener todos los géneros únicos de MongoDB"""
-        if not self.mongo_service.connect() or not self.mongo_service.collection:
+        if not self.mongo_service.connect() or self.mongo_service.collection is None:
             return []
 
         try:
-            # Obtener géneros únicos
+            # Medir solo la consulta distinct
+            start_time = time.perf_counter()
             genres = self.mongo_service.collection.distinct("genres")
+            end_time = time.perf_counter()
+            self.last_query_time = round((end_time - start_time) * 1000, 3)
+
             # Convertir a formato similar al modelo Django
             return [{"genre": genre} for genre in genres if genre]
         finally:

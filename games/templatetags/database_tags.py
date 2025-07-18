@@ -31,14 +31,14 @@ def format_query_time(value):
         return ""
 
 
-@register.inclusion_tag("query_time_display.html")
+@register.inclusion_tag("real_time_display.html")
 def show_query_time(
-    query_time=None, db_type=None, total_response_time=None, view_processing_time=None
+    total_response_time=None,
+    db_type=None,
+    **kwargs,  # Ignorar cualquier otro parámetro para compatibilidad
 ):
-    """Template tag para mostrar el tiempo de consulta y procesamiento con estilo"""
+    """Template tag para mostrar el tiempo real de carga de la página"""
     return {
-        "query_time": query_time,
-        "db_type": db_type or "relational",
         "total_response_time": total_response_time,
-        "view_processing_time": view_processing_time,
+        "db_type": db_type or "relational",
     }

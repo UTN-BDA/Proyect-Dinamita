@@ -1,3 +1,5 @@
+# This file should be empty or only contain package initialization code
+# Template tags should be defined in separate modules like database_tags.py
 from django import template
 
 register = template.Library()
