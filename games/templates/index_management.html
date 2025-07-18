@@ -35,9 +35,11 @@
                 {% endfor %}
             </select>
         </div>
-        <div class="col-md-3 d-flex align-items-end">
+        <div class="col-md-6 d-flex align-items-end">
             <button type="submit" name="accion" value="crear" class="btn btn-success me-2 w-100">Crear Índice</button>
-            <button type="submit" name="accion" value="eliminar" class="btn btn-danger w-100">Eliminar Índice</button>
+    
+            <!-- Eliminar todos los índices -->
+            <button type="submit" name="accion" value="eliminar_todos" class="btn btn-danger w-100" onclick="return confirm('¿Estás seguro que deseas eliminar todos los índices (excepto claves primarias y únicas) de esta tabla?');"> Eliminar todos los Índices </button>
         </div>
     </form>
 

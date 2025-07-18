@@ -311,20 +311,41 @@ def index_management(request):
         tipo = request.POST.get("tipo")
         accion = request.POST.get("accion")
 
-        if tabla in tablas and columna in columnas and tipo in ["BTREE", "HASH", "GIN", "GIST"] and accion in ["crear", "eliminar"]:
-            index_name = f"idx_{tabla}_{columna}_{tipo.lower()}"
+        if tabla in tablas and accion in ["crear", "eliminar_todos"]:
             with connection.cursor() as cursor:
                 try:
                     if accion == "crear":
-                        sql = f'CREATE INDEX {index_name} ON steam."{tabla}" USING {tipo} ("{columna}");'
-                        cursor.execute(sql)
-                        mensaje = f"Índice {index_name} creado correctamente."
-                    elif accion == "eliminar":
-                        sql = f'DROP INDEX IF EXISTS {index_name};'
-                        cursor.execute(sql)
-                        mensaje = f"Índice {index_name} eliminado correctamente."
+                        if columna in columnas and tipo in ["BTREE", "HASH", "GIN", "GIST"]:
+                            index_name = f"idx_{tabla}_{columna}_{tipo.lower()}"
+                            sql = f'CREATE INDEX {index_name} ON steam."{tabla}" USING {tipo} ("{columna}");'
+                            cursor.execute(sql)
+                            mensaje = f"Índice {index_name} creado correctamente."
+                        else:
+                            mensaje = "Parámetros inválidos para crear índice."
+
+                    elif accion == "eliminar_todos":
+                        cursor.execute("""
+                            SELECT indexname, indexdef
+                            FROM pg_indexes
+                            WHERE schemaname = 'steam' AND tablename = %s
+                        """, [tabla])
+                        all_indices = cursor.fetchall()
+                        eliminados = []
+
+                        for index_name, index_def in all_indices:
+                            if "PRIMARY KEY" in index_def or "UNIQUE" in index_def:
+                                continue
+                            cursor.execute(f'DROP INDEX IF EXISTS "{index_name}";')
+                            eliminados.append(index_name)
+
+                        if eliminados:
+                            mensaje = f"Se eliminaron los índices: {', '.join(eliminados)}"
+                        else:
+                            mensaje = "No hay índices eliminables (solo hay claves primarias o únicas)."
+
                 except Exception as e:
                     mensaje = f"Error: {str(e)}"
+
             return HttpResponseRedirect(reverse("index_manager") + f"?tabla={tabla}")
 
         elif accion == "eliminar_directo":
@@ -335,10 +356,12 @@ def index_management(request):
                     mensaje = f"Índice {index_name} eliminado correctamente."
                 except Exception as e:
                     mensaje = f"Error: {str(e)}"
+
             return HttpResponseRedirect(reverse("index_manager") + f"?tabla={tabla}")
 
         else:
             mensaje = "Parámetros inválidos."
+
 
     tablas_traducidas = [(t, traducciones.get(t, t)) for t in tablas]
     context = {
