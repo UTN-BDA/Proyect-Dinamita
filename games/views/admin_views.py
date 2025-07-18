@@ -288,8 +288,22 @@ def index_management(request):
                 WHERE table_schema = 'steam' AND table_name = %s
             """, [tabla_sel])
             columnas = [row[0] for row in cursor.fetchall()]
+
+        # Obtener índices existentes para la tabla seleccionada
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    indexname,
+                    indexdef
+                FROM
+                    pg_indexes
+                WHERE
+                    schemaname = 'steam' AND tablename = %s
+            """, [tabla_sel])
+            indices = cursor.fetchall()
     else:
         columnas = []
+        indices = []
 
     if request.method == "POST":
         tabla = request.POST.get("tabla")
@@ -311,6 +325,18 @@ def index_management(request):
                         mensaje = f"Índice {index_name} eliminado correctamente."
                 except Exception as e:
                     mensaje = f"Error: {str(e)}"
+            return HttpResponseRedirect(reverse("index_manager") + f"?tabla={tabla}")
+
+        elif accion == "eliminar_directo":
+            index_name = request.POST.get("index_name")
+            with connection.cursor() as cursor:
+                try:
+                    cursor.execute(f'DROP INDEX IF EXISTS {index_name};')
+                    mensaje = f"Índice {index_name} eliminado correctamente."
+                except Exception as e:
+                    mensaje = f"Error: {str(e)}"
+            return HttpResponseRedirect(reverse("index_manager") + f"?tabla={tabla}")
+
         else:
             mensaje = "Parámetros inválidos."
 
@@ -320,5 +346,6 @@ def index_management(request):
         "tabla": tabla_sel,
         "columnas": columnas,
         "mensaje": mensaje,
+        "indices": indices,
     }
     return render(request, "index_management.html", context)
