@@ -1,7 +1,7 @@
-#!/usr/bin/env python
 """
 Script para ejecutar tests de manera controlada
 """
+
 import os
 import sys
 import django
