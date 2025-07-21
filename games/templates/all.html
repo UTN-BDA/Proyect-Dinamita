@@ -3,6 +3,52 @@
     Inicio
 {% endblock title %}
 {% block content %}
+    <style>
+        .genre-filter-width {
+            width: auto;
+        }
+    </style>
+    <div class="mb-4">
+        <nav aria-label="Filtrar por letra">
+            <ul class="pagination justify-content-center flex-wrap">
+                <li class="page-item {% if not letter_filter %}active{% endif %}">
+                    <a class="page-link"
+                       href="{% if genre_filter %}?genre_filter={{ genre_filter }}{% else %}?{% endif %}">Todos</a>
+                </li>
+                {% for char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
+                    <li class="page-item {% if letter_filter == char %}active{% endif %}">
+                        <a class="page-link" href="?letter_filter={{ char }}">{{ char }}</a>
+                    </li>
+                {% endfor %}
+                {% for num in "0123456789" %}
+                    <li class="page-item {% if letter_filter == num %}active{% endif %}">
+                        <a class="page-link" href="?letter_filter={{ num }}">{{ num }}</a>
+                    </li>
+                {% endfor %}
+                {% for special in "!@#$%^&*()-_=+[]{}|;:',.<>/?`~" %}
+                    <li class="page-item {% if letter_filter == special %}active{% endif %}">
+                        <a class="page-link" href="?letter_filter={{ special }}">{{ special }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+            <form method="get" class="d-inline">
+                <select name="genre_filter"
+                        id="genre_filter"
+                        class="form-select me-2 genre-filter-width"
+                        onchange="this.form.submit()">
+                    <option value="">Todos</option>
+                    {% for genre in all_genres %}
+                        <option value="{{ genre.name }}"
+                                {% if genre_filter == genre.name %}selected{% endif %}>{{ genre.name }}</option>
+                    {% endfor %}
+                </select>
+                <noscript>
+                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                </noscript>
+                {% if letter_filter %}<input type="hidden" name="letter_filter" value="{{ letter_filter }}">{% endif %}
+            </form>
+        </nav>
+    </div>
     <h2 class="mb-4">Todos los Juegos</h2>
     <div class="row">
         {% for game in games %}
@@ -20,11 +66,58 @@
                         <p class="card-text">Desarrolladores: {{ game.developers }}</p>
                         <p class="card-text">Editores: {{ game.publishers }}</p>
                         <p class="card-text">Categorías: {{ game.categories }}</p>
-                        <p class="card-text">Géneros: {{ game.genres }}</p>
+                        <p class="card-text">
+                            Géneros:
+                            {% for genre in game.genres.all %}
+                                {{ genre.name }}
+                                {% if not forloop.last %},{% endif %}
+                            {% empty %}
+                                Sin géneros
+                            {% endfor %}
+                        </p>
                     </div>
                 </div>
             </div>
         {% endfor %}
     </div>
+    <!-- Controles de paginación -->
+    {% if games.has_other_pages %}
+        <nav aria-label="Paginación de juegos">
+            <ul class="pagination justify-content-center">
+                {% if games.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?page={{ games.previous_page_number }}{% if letter_filter %}&letter_filter={{ letter_filter }}{% endif %}">Anterior</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Anterior</span>
+                    </li>
+                {% endif %}
+                {% for num in games.paginator.page_range %}
+                    {% if games.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > games.number|add:'-3' and num < games.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link"
+                               href="?page={{ num }}{% if letter_filter %}&letter_filter={{ letter_filter }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                {% if games.has_next %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?page={{ games.next_page_number }}{% if letter_filter %}&letter_filter={{ letter_filter }}{% endif %}">Siguiente</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Siguiente</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
     {% if not games %}<div class="alert alert-warning mt-3">No se encontraron juegos.</div>{% endif %}
 {% endblock content %}

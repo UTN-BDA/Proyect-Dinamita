@@ -23,7 +23,7 @@ DEBUG = True
 STATIC_URL = "/static/"
 LOGIN_URL = "login"
 
-LOGIN_REDIRECT_URL = "game_search"
+LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "login"
 
 SESSION_COOKIE_AGE = 30 * 60
@@ -101,6 +101,7 @@ DATABASES = {
         "PASSWORD": os.getenv("DB_PASSWORD"),
         "HOST": os.getenv("DB_HOST"),
         "PORT": os.getenv("DB_PORT"),
+        "OPTIONS": {"options": "-c search_path=steam,public"},
     }
 }
 

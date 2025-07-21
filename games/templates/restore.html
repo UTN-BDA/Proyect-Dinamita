@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Restaurar Base de Datos{% endblock title %}
+{% block content %}
+    <h2>Restaurar Base de Datos</h2>
+    
+    <div class="alert alert-warning" role="alert">
+        <strong>¡Atención!</strong> La restauración sobrescribirá los datos existentes en las tablas incluidas en el archivo de backup.
+        Asegúrate de hacer un backup de la base de datos actual antes de proceder.
+    </div>
+    
+    <form method="post" enctype="multipart/form-data" id="restore-form">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label for="sql_file" class="form-label">Archivo SQL de Backup</label>
+            <input type="file" 
+                   name="sql_file" 
+                   id="sql_file" 
+                   class="form-control" 
+                   accept=".sql"
+                   required>
+            <div class="form-text">Selecciona un archivo .sql generado por el sistema de backup.</div>
+        </div>
+        
+        <div class="mb-3">
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="truncate_tables" name="truncate_tables">
+                <label class="form-check-label" for="truncate_tables">
+                    Limpiar tablas antes de restaurar
+                </label>
+                <div class="form-text">Esto eliminará todos los datos existentes en las tablas incluidas en el backup.</div>
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="confirm_restore" required>
+                <label class="form-check-label" for="confirm_restore">
+                    <strong>Confirmo que entiendo que esta operación puede sobrescribir datos existentes</strong>
+                </label>
+            </div>
+        </div>
+        
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-danger" id="restore-btn">
+                <i class="fas fa-upload"></i> Restaurar Base de Datos
+            </button>
+            <a href="{% url 'home' %}" class="btn btn-secondary">Cancelar</a>
+            <a href="{% url 'backup_help' %}" class="btn btn-info">❓ Ayuda</a>
+        </div>
+    </form>
+
+    <div class="mt-4">
+        <h5>Información sobre la Restauración</h5>
+        <ul class="list-unstyled">
+            <li><i class="fas fa-info-circle text-info"></i> La restauración procesará únicamente las tablas incluidas en el archivo de backup.</li>
+            <li><i class="fas fa-info-circle text-info"></i> Los datos existentes serán preservados a menos que selecciones "Limpiar tablas".</li>
+            <li><i class="fas fa-info-circle text-info"></i> En caso de conflictos, los datos del backup sobrescribirán los existentes.</li>
+        </ul>
+    </div>
+
+    <script>
+        document.getElementById('restore-form').addEventListener('submit', function(e) {
+            const confirmCheckbox = document.getElementById('confirm_restore');
+            if (!confirmCheckbox.checked) {
+                e.preventDefault();
+                alert('Debes confirmar que entiendes las implicaciones de la restauración.');
+                return;
+            }
+            
+            if (!confirm('¿Estás seguro de que deseas proceder con la restauración? Esta operación no se puede deshacer.')) {
+                e.preventDefault();
+            }
+        });
+        
+        // Mostrar el nombre del archivo seleccionado
+        document.getElementById('sql_file').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                console.log('Archivo seleccionado:', file.name);
+            }
+        });
+    </script>
+{% endblock content %}

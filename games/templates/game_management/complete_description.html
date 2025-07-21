@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}
+    Completar Descripción - {{ game.name }}
+{% endblock title %}
+{% block content %}
+    <div class="container">
+        <h2 class="mb-4">📝 Completar Descripción: {{ game.name }}</h2>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <!-- Información del Juego -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">ℹ️ Información del Juego</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>ID:</strong> {{ game.app_id }}</p>
+                        <p><strong>Nombre:</strong> {{ game.name }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Fecha de Lanzamiento:</strong> {{ game.rel_date|date:"d/m/Y" }}</p>
+                        <p><strong>Precio:</strong> 
+                            {% if game.price %}
+                                ${{ game.price }}
+                            {% else %}
+                                <span class="text-muted">Gratis</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <!-- Descripción del Juego -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">📝 Descripción del Juego</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        {{ description_form.short_description.label_tag }}
+                        {{ description_form.short_description }}
+                        {% if description_form.short_description.errors %}
+                            <div class="text-danger">{{ description_form.short_description.errors }}</div>
+                        {% endif %}
+                        <div class="form-text">Una descripción breve y atractiva del juego.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ description_form.about_the_game.label_tag }}
+                        {{ description_form.about_the_game }}
+                        {% if description_form.about_the_game.errors %}
+                            <div class="text-danger">{{ description_form.about_the_game.errors }}</div>
+                        {% endif %}
+                        <div class="form-text">Información general sobre el juego, su historia y características principales.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ description_form.detailed_description.label_tag }}
+                        {{ description_form.detailed_description }}
+                        {% if description_form.detailed_description.errors %}
+                            <div class="text-danger">{{ description_form.detailed_description.errors }}</div>
+                        {% endif %}
+                        <div class="form-text">Descripción completa y detallada del juego, incluyendo mecánicas, historia y características especiales.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Botones de Acción -->
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'search_and_edit_game' %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver a Búsqueda
+                </a>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Guardar Descripción
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Bootstrap JS para alertas -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock content %}
