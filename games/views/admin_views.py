@@ -11,7 +11,8 @@ from django.http import FileResponse, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.contrib import messages
 from django.apps import apps
-from django.db import models
+from django.db import models, connection
+from django.views.decorators.http import require_http_methods
 
 
 class DatabaseBackupService:
@@ -236,3 +237,138 @@ def view_db_schema(request):
     context = {"models_info": models_info, "svg_height": svg_height}
 
     return render(request, "db_schema.html", context)
+
+
+@require_http_methods(["GET", "POST"])
+def index_management(request):
+    mensaje = None
+
+    # Solo estas tablas permitidas
+    tablas_permitidas = [
+        "about_game", "audio_lenguages", "developers", "games", "genres",
+        "languages", "packages", "plataforms", "publishers"
+    ]
+    # Traducción de nombres
+    traducciones = {
+        "about_game": "Acerca del Juego",
+        "audio_lenguages": "Idiomas de Audio",
+        "developers": "Desarrolladores",
+        "games": "Juegos",
+        "genres": "Géneros",
+        "languages": "Idiomas",
+        "packages": "Paquetes",
+        "plataforms": "Plataformas",
+        "publishers": "Distribuidores"
+    }
+
+    tablas = []
+    columnas = []
+
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = 'steam'
+        """)
+        tablas = [row[0] for row in cursor.fetchall() if row[0] in tablas_permitidas]
+
+    # Selección de tabla
+    if request.method == "POST" and "tabla" in request.POST:
+        tabla_sel = request.POST["tabla"]
+    elif tablas:
+        tabla_sel = tablas[0]
+    else:
+        tabla_sel = None
+
+    if tabla_sel:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_schema = 'steam' AND table_name = %s
+            """, [tabla_sel])
+            columnas = [row[0] for row in cursor.fetchall()]
+
+        # Obtener índices existentes para la tabla seleccionada
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    indexname,
+                    indexdef
+                FROM
+                    pg_indexes
+                WHERE
+                    schemaname = 'steam' AND tablename = %s
+            """, [tabla_sel])
+            indices = cursor.fetchall()
+    else:
+        columnas = []
+        indices = []
+
+    if request.method == "POST":
+        tabla = request.POST.get("tabla")
+        columna = request.POST.get("columna")
+        tipo = request.POST.get("tipo")
+        accion = request.POST.get("accion")
+
+        if tabla in tablas and accion in ["crear", "eliminar_todos"]:
+            with connection.cursor() as cursor:
+                try:
+                    if accion == "crear":
+                        if columna in columnas and tipo in ["BTREE", "HASH", "GIN", "GIST"]:
+                            index_name = f"idx_{tabla}_{columna}_{tipo.lower()}"
+                            sql = f'CREATE INDEX {index_name} ON steam."{tabla}" USING {tipo} ("{columna}");'
+                            cursor.execute(sql)
+                            mensaje = f"Índice {index_name} creado correctamente."
+                        else:
+                            mensaje = "Parámetros inválidos para crear índice."
+
+                    elif accion == "eliminar_todos":
+                        cursor.execute("""
+                            SELECT indexname, indexdef
+                            FROM pg_indexes
+                            WHERE schemaname = 'steam' AND tablename = %s
+                        """, [tabla])
+                        all_indices = cursor.fetchall()
+                        eliminados = []
+
+                        for index_name, index_def in all_indices:
+                            if "PRIMARY KEY" in index_def or "UNIQUE" in index_def:
+                                continue
+                            cursor.execute(f'DROP INDEX IF EXISTS "{index_name}";')
+                            eliminados.append(index_name)
+
+                        if eliminados:
+                            mensaje = f"Se eliminaron los índices: {', '.join(eliminados)}"
+                        else:
+                            mensaje = "No hay índices eliminables (solo hay claves primarias o únicas)."
+
+                except Exception as e:
+                    mensaje = f"Error: {str(e)}"
+
+            return HttpResponseRedirect(reverse("index_manager") + f"?tabla={tabla}")
+
+        elif accion == "eliminar_directo":
+            index_name = request.POST.get("index_name")
+            with connection.cursor() as cursor:
+                try:
+                    cursor.execute(f'DROP INDEX IF EXISTS {index_name};')
+                    mensaje = f"Índice {index_name} eliminado correctamente."
+                except Exception as e:
+                    mensaje = f"Error: {str(e)}"
+
+            return HttpResponseRedirect(reverse("index_manager") + f"?tabla={tabla}")
+
+        else:
+            mensaje = "Parámetros inválidos."
+
+
+    tablas_traducidas = [(t, traducciones.get(t, t)) for t in tablas]
+    context = {
+        "tablas_traducidas": tablas_traducidas,
+        "tabla": tabla_sel,
+        "columnas": columnas,
+        "mensaje": mensaje,
+        "indices": indices,
+    }
+    return render(request, "index_management.html", context)

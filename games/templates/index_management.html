@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Administrador de Índices
+{% endblock title %}
+
+{% block content %}
+    <h2 class="mb-4">Administrador de Índices en la Base de Datos</h2>
+
+    <form method="post" class="row g-3">
+        {% csrf_token %}
+        <input type="hidden" name="tabla" value="{{ tabla }}">
+        <div class="col-md-6">
+            <label for="columna" class="form-label">Columna</label>
+            <select name="columna" id="columna" class="form-select" required>
+                {% for c in columnas %}
+                    <option value="{{ c }}">{{ c }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="tipo" class="form-label">Tipo de Índice</label>
+            <select name="tipo" id="tipo" class="form-select">
+                <option value="BTREE">BTREE</option>
+                <option value="HASH">HASH</option>
+                <option value="GIN">GIN</option>
+                <option value="GIST">GIST</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="tabla" class="form-label">Tabla</label>
+            <select name="tabla" id="tabla" class="form-select" required onchange="this.form.submit()">
+                {% for t, nombre in tablas_traducidas %}
+                    <option value="{{ t }}" {% if t == tabla %}selected{% endif %}>{{ nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-6 d-flex align-items-end">
+            <button type="submit" name="accion" value="crear" class="btn btn-success me-2 w-100">Crear Índice</button>
+    
+            <!-- Eliminar todos los índices -->
+            <button type="submit" name="accion" value="eliminar_todos" class="btn btn-danger w-100" onclick="return confirm('¿Estás seguro que deseas eliminar todos los índices (excepto claves primarias y únicas) de esta tabla?');"> Eliminar todos los Índices </button>
+        </div>
+    </form>
+
+    {% if mensaje %}
+        <div class="alert alert-info mt-4">{{ mensaje }}</div>
+    {% endif %}
+
+    {% if indices %}
+        <h5 class="mt-4">Índices existentes en la tabla seleccionada:</h5>
+        <ul class="list-group mb-4">
+            {% for nombre, definicion in indices %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ nombre }}</strong>
+                    </div>
+                    {% if "PRIMARY KEY" not in definicion and "UNIQUE" not in definicion %}
+                        <form method="post" style="margin:0;">
+                            {% csrf_token %}
+                            <input type="hidden" name="tabla" value="{{ tabla }}">
+                            <input type="hidden" name="index_name" value="{{ nombre }}">
+                            <button type="submit" name="accion" value="eliminar_directo" class="btn btn-danger btn-sm">
+                                Eliminar
+                            </button>
+                        </form>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock content %}

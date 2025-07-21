@@ -18,6 +18,7 @@ from .views import (
     search_and_edit_game,
     edit_game,
     complete_description,
+    index_management,
 )
 
 urlpatterns = [
@@ -43,4 +44,5 @@ urlpatterns = [
         complete_description,
         name="complete_description",
     ),
+    path("index-manager/", index_management, name="index_manager"),
 ]
