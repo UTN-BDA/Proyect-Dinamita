@@ -2,6 +2,7 @@ import os
 from django.core.management.base import BaseCommand
 from django.db import connection, transaction
 
+
 class Command(BaseCommand):
     help = "Genera un informe de rendimiento de búsqueda por name"
 
@@ -15,7 +16,8 @@ class Command(BaseCommand):
 
     def get_size_pretty(self, relation):
         with connection.cursor() as cursor:
-            cursor.execute(f"SELECT pg_size_pretty(pg_relation_size('{relation}'));")
+            # SEGURIDAD: Usar parámetros en lugar de f-strings
+            cursor.execute("SELECT pg_size_pretty(pg_relation_size(%s));", [relation])
             return cursor.fetchone()[0]
 
     def handle(self, *args, **options):

@@ -6,17 +6,6 @@
 
 {% block content %}
     <h2 class="mb-4">Administrador de Índices en la Base de Datos</h2>
-    
-    <!-- Información útil -->
-    <div class="alert alert-info mb-4">
-        <h5>💡 Recomendaciones para optimizar "Ver todos los juegos":</h5>
-        <ul class="mb-2">
-            <li><strong>Tabla games, columna name:</strong> Optimiza ordenamiento y filtros por letra inicial</li>
-            <li><strong>Tabla genres, columna genre:</strong> Optimiza filtros por género</li>
-            <li><strong>Tabla genres, columna app_id:</strong> Optimiza joins entre games y genres</li>
-        </ul>
-        <small class="text-muted">Los índices BTREE son ideales para ordenamiento y búsquedas de igualdad/rango.</small>
-    </div>
 
     <form method="post" class="row g-3">
         {% csrf_token %}

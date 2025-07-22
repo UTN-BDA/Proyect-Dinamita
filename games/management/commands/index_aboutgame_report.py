@@ -3,11 +3,14 @@ from django.core.management.base import BaseCommand
 from django.db import connection, transaction
 from django.db.utils import OperationalError
 
+
 class Command(BaseCommand):
     help = "Genera un informe de rendimiento de búsqueda por about_game"
 
     def add_arguments(self, parser):
-        parser.add_argument("--about", required=True, help="Texto exacto del campo about_game")
+        parser.add_argument(
+            "--about", required=True, help="Texto exacto del campo about_game"
+        )
 
     def run_explain(self, sql, params=None):
         with connection.cursor() as cursor:
@@ -16,7 +19,8 @@ class Command(BaseCommand):
 
     def get_size_pretty(self, relation):
         with connection.cursor() as cursor:
-            cursor.execute(f"SELECT pg_size_pretty(pg_relation_size('{relation}'));")
+            # SEGURIDAD: Usar parámetros en lugar de f-strings
+            cursor.execute("SELECT pg_size_pretty(pg_relation_size(%s));", [relation])
             return cursor.fetchone()[0]
 
     def handle(self, *args, **options):
@@ -28,7 +32,9 @@ class Command(BaseCommand):
         # Crear la carpeta para reportes si no existe
         report_dir = os.path.join(os.getcwd(), "reports")
         os.makedirs(report_dir, exist_ok=True)
-        path = os.path.join(report_dir, f"report_about_{about[:20].replace(' ', '_')}.md")
+        path = os.path.join(
+            report_dir, f"report_about_{about[:20].replace(' ', '_')}.md"
+        )
         lines = []
 
         explain_sql = f"EXPLAIN ANALYZE SELECT * FROM {table} WHERE about_game = %s;"
@@ -53,10 +59,14 @@ class Command(BaseCommand):
                 lines.append("```")
                 lines.append("## 3. Tamaño índice B-tree")
                 lines.append(f"- Tabla `{table}`: {self.get_size_pretty(table)}")
-                lines.append(f"- Índice `{idx_btree}`: {self.get_size_pretty(idx_btree)}")
+                lines.append(
+                    f"- Índice `{idx_btree}`: {self.get_size_pretty(idx_btree)}"
+                )
             except OperationalError as e:
-                if 'index row size' in str(e):
-                    lines.append(f"_No se pudo crear el índice B-tree debido al tamaño del campo: {str(e)}_")
+                if "index row size" in str(e):
+                    lines.append(
+                        f"_No se pudo crear el índice B-tree debido al tamaño del campo: {str(e)}_"
+                    )
                 else:
                     lines.append(f"_Error al crear el índice B-tree: {str(e)}_")
 

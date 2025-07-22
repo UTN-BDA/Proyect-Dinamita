@@ -45,7 +45,8 @@ class Command(BaseCommand):
         de una tabla o índice (relation).
         """
         with connection.cursor() as cursor:
-            cursor.execute(f"SELECT pg_size_pretty(pg_relation_size('{relation}'));")
+            # SEGURIDAD: Usar parámetros en lugar de f-strings
+            cursor.execute("SELECT pg_size_pretty(pg_relation_size(%s));", [relation])
             # Devuelve el valor formateado (por ejemplo '2472 kB')
             return cursor.fetchone()[0]
 

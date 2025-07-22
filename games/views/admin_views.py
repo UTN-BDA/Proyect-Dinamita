@@ -1,10 +1,12 @@
 import os
 import subprocess
+import re
 from django.shortcuts import render, redirect
 from django.conf import settings
 from django.http import FileResponse, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.apps import apps
 from django.db import models, connection
 from django.views.decorators.http import require_http_methods
@@ -124,12 +126,48 @@ class DatabaseSchemaService:
 
     @staticmethod
     def get_models_info():
-        """Obtiene información de todos los modelos"""
+        """Obtiene información de modelos permitidos - SIN TABLAS SENSIBLES"""
         models_info = []
 
-        for model in apps.get_models():
-            model_data = DatabaseSchemaService._analyze_model(model)
-            models_info.append(model_data)
+        # Lista de tablas permitidas - SIN TABLAS DE AUTENTICACIÓN
+        tablas_permitidas = [
+            "about_game",
+            "audio_languages",
+            "developers",
+            "games",
+            "genres",
+            "languages",
+            "packages",
+            "platforms",
+            "publishers",
+            "categories",
+            "reviews",
+            "playtime",
+            "urls",
+            "metacritic",
+            "scores_and_ranks",
+            # OCULTAS POR SEGURIDAD: auth_user, auth_group, auth_permission,
+            # django_session, django_admin_log, django_content_type, etc.
+        ]
+
+        # Solo obtener modelos de la aplicación 'games' que estén en la lista permitida
+        try:
+            games_app = apps.get_app_config("games")
+            for model in games_app.get_models():
+                table_name = model._meta.db_table
+                # SEGURIDAD: Solo incluir tablas en la lista blanca
+                if table_name in tablas_permitidas:
+                    model_data = DatabaseSchemaService._analyze_model(model)
+                    models_info.append(model_data)
+        except LookupError:
+            # Fallback con lista blanca estricta
+            for model in apps.get_models():
+                if (
+                    model._meta.app_label == "games"
+                    and model._meta.db_table in tablas_permitidas
+                ):
+                    model_data = DatabaseSchemaService._analyze_model(model)
+                    models_info.append(model_data)
 
         return models_info
 
@@ -158,38 +196,49 @@ class DatabaseSchemaService:
 
     @staticmethod
     def get_available_tables():
-        """Obtiene información de tablas disponibles para backup"""
+        """Obtiene información de tablas disponibles para backup - Con filtro de seguridad"""
         tables = []
+
+        # Lista de tablas permitidas - SIN TABLAS DE AUTENTICACIÓN
+        tablas_permitidas = [
+            "about_game",
+            "audio_languages",
+            "developers",
+            "games",
+            "genres",
+            "languages",
+            "packages",
+            "platforms",
+            "publishers",
+            "categories",
+            "reviews",
+            "playtime",
+            "urls",
+            "metacritic",
+            "scores_and_ranks",
+            # OCULTAS POR SEGURIDAD: auth_user, auth_group, auth_permission,
+            # django_session, django_admin_log, django_content_type, etc.
+        ]
+
         # Solo obtener modelos de la aplicación 'games'
         try:
             games_app = apps.get_app_config("games")
             for model in games_app.get_models():
-                tables.append(
-                    {
-                        "model_name": model.__name__,
-                        "db_table": model._meta.db_table,
-                    }
-                )
+                table_name = model._meta.db_table
+                # SEGURIDAD: Solo incluir tablas en la lista blanca
+                if table_name in tablas_permitidas:
+                    tables.append(
+                        {
+                            "model_name": model.__name__,
+                            "db_table": table_name,
+                        }
+                    )
         except LookupError:
-            # Fallback: filtrar manualmente las tablas que empiecen con el esquema correcto
+            # Fallback con lista blanca estricta
             for model in apps.get_models():
-                # Solo incluir tablas que pertenezcan al esquema steam o games
                 if (
                     model._meta.app_label == "games"
-                    or model._meta.db_table.startswith("steam.")
-                    or model._meta.db_table
-                    in [
-                        "games",
-                        "genres",
-                        "developers",
-                        "publishers",
-                        "about_game",
-                        "audio_lenguages",
-                        "languages",
-                        "packages",
-                        "plataforms",
-                        "categories",
-                    ]
+                    and model._meta.db_table in tablas_permitidas
                 ):
                     tables.append(
                         {
@@ -203,6 +252,7 @@ class DatabaseSchemaService:
 # Vistas que usan los servicios
 
 
+@login_required
 def backup_db(request):
     """Vista para crear backup de la base de datos"""
     if request.method == "POST":
@@ -250,6 +300,7 @@ def backup_db(request):
     return render(request, "backup.html", context)
 
 
+@login_required
 def restore_db(request):
     """Vista para restaurar base de datos"""
     if request.method == "POST" and request.FILES.get("sql_file"):
@@ -265,6 +316,7 @@ def restore_db(request):
     return render(request, "restore.html")
 
 
+@login_required
 def backup_management(request):
     """Vista para gestión de backups - Panel de control"""
     available_tables = DatabaseSchemaService.get_available_tables()
@@ -276,11 +328,13 @@ def backup_management(request):
     return render(request, "backup_management.html", context)
 
 
+@login_required
 def backup_help(request):
     """Vista para ayuda sobre backup y restore"""
     return render(request, "backup_help.html")
 
 
+@login_required
 def view_db_schema(request):
     """Vista para mostrar schema de la base de datos"""
     models_info = DatabaseSchemaService.get_models_info()
@@ -292,64 +346,93 @@ def view_db_schema(request):
 
 
 @require_http_methods(["GET", "POST"])
+@login_required
 def index_management(request):
+    """Vista para gestión de índices - Con tablas filtradas por seguridad"""
+
     mensaje = None
 
-    # Solo estas tablas permitidas
+    # SEGURIDAD: Lista de tablas permitidas - SIN TABLAS DE AUTENTICACIÓN
     tablas_permitidas = [
         "about_game",
-        "audio_languages",  # Corregido: era "audio_lenguages"
+        "audio_languages",
         "developers",
         "games",
         "genres",
         "languages",
         "packages",
-        "platforms",  # Corregido: era "plataforms"
+        "platforms",
         "publishers",
+        "categories",
+        "reviews",
+        "playtime",
+        "urls",
+        "metacritic",
+        "scores_and_ranks",
+        # OCULTAS POR SEGURIDAD: auth_user, auth_group, auth_permission, django_session, etc.
     ]
+
+    # Lista de tipos de índice permitidos
+    tipos_indice_permitidos = ["BTREE", "HASH", "GIN", "GIST"]
+
     # Traducción de nombres
     traducciones = {
         "about_game": "Acerca del Juego",
-        "audio_languages": "Idiomas de Audio",  # Corregido
+        "audio_languages": "Idiomas de Audio",
         "developers": "Desarrolladores",
         "games": "Juegos",
         "genres": "Géneros",
         "languages": "Idiomas",
         "packages": "Paquetes",
-        "platforms": "Plataformas",  # Corregido
+        "platforms": "Plataformas",
         "publishers": "Distribuidores",
+        "categories": "Categorías",
+        "reviews": "Reseñas",
+        "playtime": "Tiempo de Juego",
+        "urls": "URLs",
+        "metacritic": "Metacritic",
+        "scores_and_ranks": "Puntuaciones y Rankings",
     }
 
     tablas = []
     columnas = []
 
+    # Usar parámetros prepared statements para seguridad SQL
     with connection.cursor() as cursor:
         cursor.execute(
             """
             SELECT table_name
             FROM information_schema.tables
-            WHERE table_schema = 'steam'
-        """
+            WHERE table_schema = %s
+            AND table_name = ANY(%s)
+            ORDER BY table_name
+            """,
+            ["steam", tablas_permitidas],
         )
-        tablas = [row[0] for row in cursor.fetchall() if row[0] in tablas_permitidas]
+        tablas = [row[0] for row in cursor.fetchall()]
 
     # Selección de tabla
     if request.method == "POST" and "tabla" in request.POST:
         tabla_sel = request.POST["tabla"]
+        # Validar que la tabla esté en la lista permitida
+        if tabla_sel not in tablas_permitidas:
+            messages.error(request, "Tabla no disponible.")
+            return redirect("index_manager")
     elif tablas:
         tabla_sel = tablas[0]
     else:
         tabla_sel = None
 
-    if tabla_sel:
+    if tabla_sel and tabla_sel in tablas_permitidas:
         with connection.cursor() as cursor:
             cursor.execute(
                 """
                 SELECT column_name
                 FROM information_schema.columns
-                WHERE table_schema = 'steam' AND table_name = %s
-            """,
-                [tabla_sel],
+                WHERE table_schema = %s AND table_name = %s
+                ORDER BY ordinal_position
+                """,
+                ["steam", tabla_sel],
             )
             columnas = [row[0] for row in cursor.fetchall()]
 
@@ -364,10 +447,10 @@ def index_management(request):
                 FROM
                     pg_indexes
                 WHERE
-                    schemaname = 'steam' AND tablename = %s
+                    schemaname = %s AND tablename = %s
                 ORDER BY indexname
-            """,
-                [tabla_sel],
+                """,
+                ["steam", tabla_sel],
             )
             indices = cursor.fetchall()
             # Asegurar que cada tupla tenga exactamente 3 elementos
@@ -384,48 +467,47 @@ def index_management(request):
         tipo = request.POST.get("tipo")
         accion = request.POST.get("accion")
 
+        # Validaciones
+        if tabla not in tablas_permitidas:
+            messages.error(request, "Tabla no permitida.")
+            return redirect("index_manager")
+
+        if tipo and tipo not in tipos_indice_permitidos:
+            messages.error(request, "Tipo de índice no permitido.")
+            return redirect("index_manager")
+
         if tabla in tablas and accion in ["crear", "eliminar_todos"]:
             with connection.cursor() as cursor:
                 try:
                     if accion == "crear":
-                        if columna in columnas and tipo in [
-                            "BTREE",
-                            "HASH",
-                            "GIN",
-                            "GIST",
-                        ]:
+                        if columna in columnas and tipo in tipos_indice_permitidos:
+                            # Sanitizar nombre del índice
                             index_name = f"idx_{tabla}_{columna}_{tipo.lower()}"
 
-                            # Verificar si el índice ya existe
-                            cursor.execute(
-                                """
-                                SELECT indexname FROM pg_indexes 
-                                WHERE schemaname = 'steam' AND tablename = %s AND indexname = %s
-                            """,
-                                [tabla, index_name],
-                            )
-
-                            if cursor.fetchone():
-                                mensaje = f"El índice {index_name} ya existe."
+                            # Verificar caracteres permitidos en nombres
+                            if not re.match(r"^[a-zA-Z0-9_]+$", index_name):
+                                mensaje = "Nombre de índice contiene caracteres no permitidos."
                             else:
-                                # Crear índice con manejo de errores mejorado
-                                try:
-                                    sql = f'CREATE INDEX CONCURRENTLY {index_name} ON steam."{tabla}" USING {tipo} ("{columna}");'
-                                    cursor.execute(sql)
-                                    mensaje = f"✅ Índice {index_name} creado correctamente en la columna '{columna}' de la tabla '{tabla}'. Esto optimizará las consultas que filtren u ordenen por esta columna."
-                                except Exception as e:
-                                    # Si falla CONCURRENTLY, intentar sin él
-                                    if "CONCURRENTLY" in str(e):
-                                        try:
-                                            sql = f'CREATE INDEX {index_name} ON steam."{tabla}" USING {tipo} ("{columna}");'
-                                            cursor.execute(sql)
-                                            mensaje = f"✅ Índice {index_name} creado correctamente en la columna '{columna}' de la tabla '{tabla}' (sin CONCURRENTLY). Esto optimizará las consultas que filtren u ordenen por esta columna."
-                                        except Exception as e2:
-                                            mensaje = (
-                                                f"❌ Error al crear índice: {str(e2)}"
-                                            )
-                                    else:
-                                        mensaje = f"❌ Error al crear índice: {str(e)}"
+                                # Verificar si el índice ya existe
+                                cursor.execute(
+                                    """
+                                    SELECT indexname FROM pg_indexes 
+                                    WHERE schemaname = %s AND tablename = %s AND indexname = %s
+                                    """,
+                                    ["steam", tabla, index_name],
+                                )
+
+                                if cursor.fetchone():
+                                    mensaje = f"El índice {index_name} ya existe."
+                                else:
+                                    # Usar nombres escapados para CREATE INDEX
+                                    try:
+                                        cursor.execute(
+                                            f'CREATE INDEX "{index_name}" ON "steam"."{tabla}" USING {tipo} ("{columna}");'
+                                        )
+                                        mensaje = f"✅ Índice {index_name} creado correctamente"
+                                    except Exception as e2:
+                                        mensaje = f"❌ Error al crear índice: {str(e2)}"
                         else:
                             mensaje = "Parámetros inválidos para crear índice."
 
@@ -434,9 +516,9 @@ def index_management(request):
                             """
                             SELECT indexname, indexdef
                             FROM pg_indexes
-                            WHERE schemaname = 'steam' AND tablename = %s
-                        """,
-                            [tabla],
+                            WHERE schemaname = %s AND tablename = %s
+                            """,
+                            ["steam", tabla],
                         )
                         all_indices = cursor.fetchall()
                         eliminados = []
@@ -444,7 +526,10 @@ def index_management(request):
                         for index_name, index_def in all_indices:
                             if "PRIMARY KEY" in index_def or "UNIQUE" in index_def:
                                 continue
-                            cursor.execute(f'DROP INDEX IF EXISTS "{index_name}";')
+                            # Escapar nombre del índice
+                            cursor.execute(
+                                f'DROP INDEX IF EXISTS "steam"."{index_name}";'
+                            )
                             eliminados.append(index_name)
 
                         if eliminados:
@@ -461,10 +546,25 @@ def index_management(request):
 
         elif accion == "eliminar_directo":
             index_name = request.POST.get("index_name")
+
+            # Validar que el índice pertenezca a una tabla permitida
             with connection.cursor() as cursor:
                 try:
-                    cursor.execute(f"DROP INDEX IF EXISTS {index_name};")
-                    mensaje = f"Índice {index_name} eliminado correctamente."
+                    # Verificar que el índice existe y pertenece a una tabla permitida
+                    cursor.execute(
+                        """
+                        SELECT tablename FROM pg_indexes 
+                        WHERE schemaname = %s AND indexname = %s AND tablename = ANY(%s)
+                        """,
+                        ["steam", index_name, tablas_permitidas],
+                    )
+
+                    if cursor.fetchone():
+                        cursor.execute(f'DROP INDEX IF EXISTS "steam"."{index_name}";')
+                        mensaje = f"Índice {index_name} eliminado correctamente."
+                    else:
+                        mensaje = "Índice no encontrado o no permitido."
+
                 except Exception as e:
                     mensaje = f"Error: {str(e)}"
 
@@ -478,7 +578,8 @@ def index_management(request):
         "tablas_traducidas": tablas_traducidas,
         "tabla": tabla_sel,
         "columnas": columnas,
+        "indices": indices if tabla_sel else [],
         "mensaje": mensaje,
-        "indices": indices,
     }
+
     return render(request, "index_management.html", context)
