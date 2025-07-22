@@ -159,15 +159,9 @@ def database_status(request):
     mongo_count = 0
 
     if mongo_connected:
-        try:
-            mongo_count = (
-                mongo_service.collection.count_documents({})
-                if mongo_service.collection
-                else 0
-            )
-        except:
-            mongo_count = 0
-        mongo_service.disconnect()
+        mongo_service.disconnect()  # Cerrar la conexión inicial
+        # Usar el método específico para contar
+        mongo_count = mongo_service.count_games()
 
     # Verificar estado de la BD relacional
     relational_count = 0

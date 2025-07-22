@@ -208,3 +208,17 @@ class MongoDBService:
             return []
         finally:
             self.disconnect()
+
+    def count_games(self):
+        """Contar el número total de juegos en MongoDB"""
+        try:
+            if not self.connect():
+                return 0
+
+            count = self.collection.count_documents({})
+            return count
+        except Exception as e:
+            print(f"Error contando juegos en MongoDB: {e}")
+            return 0
+        finally:
+            self.disconnect()
