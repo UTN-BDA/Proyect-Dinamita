@@ -1,12 +1,167 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}
     Gráficos por Género
 {% endblock title %}
 {% block content %}
-    <h2 class="mb-4">Cantidad de Juegos por Género</h2>
-    <canvas id="genreChart" width="400" height="200"></canvas>
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>📊 Cantidad de Juegos por Género</h2>
+            
+            <!-- Panel de Control de Índice -->
+            {% if user.is_authenticated %}
+            <div class="card border-primary" style="min-width: 350px;">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">🚀 Optimización de Consulta</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-8">
+                            <small class="text-muted">Estado del índice:</small><br>
+                            {% if index_exists %}
+                                <span class="badge bg-success">✅ Activo</span>
+                                <small class="text-success d-block">Consulta optimizada</small>
+                            {% else %}
+                                <span class="badge bg-warning">⚠️ Sin índice</span>
+                                <small class="text-warning d-block">Consulta estándar</small>
+                            {% endif %}
+                        </div>
+                        <div class="col-4">
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                {% if index_exists %}
+                                    <button type="submit" name="index_action" value="drop" 
+                                            class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('¿Eliminar el índice de optimización?')">
+                                        🗑️ Eliminar
+                                    </button>
+                                {% else %}
+                                    <button type="submit" name="index_action" value="create" 
+                                            class="btn btn-sm btn-success">
+                                        ⚡ Crear
+                                    </button>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Estadísticas de rendimiento -->
+                    <hr class="my-2">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <small class="text-muted">Tiempo:</small><br>
+                            <strong class="text-primary">{{ query_time }}ms</strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted">Géneros:</small><br>
+                            <strong class="text-info">{{ total_genres }}</strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted">Juegos:</small><br>
+                            <strong class="text-success">{{ total_games }}</strong>
+                        </div>
+                    </div>
+                    
+                    <!-- Botón de Reporte de Rendimiento -->
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-info w-100" 
+                                onclick="generatePerformanceReport()" id="reportBtn">
+                            📈 Generar Reporte de Rendimiento
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Mensajes de estado -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Modal para Reporte de Rendimiento -->
+        <div class="modal fade" id="performanceModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title">📊 Reporte de Rendimiento - Índices</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body" id="performanceContent">
+                        <div class="text-center">
+                            <div class="spinner-border text-info" role="status">
+                                <span class="visually-hidden">Generando reporte...</span>
+                            </div>
+                            <p class="mt-2">Analizando rendimiento...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <canvas id="genreChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información Técnica -->
+        {% if user.is_authenticated %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">🔧 Información Técnica</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Consulta Utilizada:</h6>
+                                {% if index_exists %}
+                                <code class="text-success">
+                                    SELECT g.genre, COUNT(DISTINCT g.app_id)<br>
+                                    FROM genres g WHERE g.genre IS NOT NULL<br>
+                                    GROUP BY g.genre ORDER BY count DESC
+                                </code>
+                                <small class="text-success d-block mt-1">✅ Con índice B-tree optimizado</small>
+                                {% else %}
+                                <code class="text-warning">
+                                    Django ORM: Genres.objects.values("genre")<br>
+                                    .annotate(count=Count("app", distinct=True))
+                                </code>
+                                <small class="text-warning d-block mt-1">⚠️ Sin optimización de índice</small>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Beneficios del Índice:</h6>
+                                <ul class="list-unstyled">
+                                    <li>🚀 <strong>Velocidad:</strong> Consultas hasta 10x más rápidas</li>
+                                    <li>📊 <strong>GROUP BY optimizado:</strong> Agrupación eficiente</li>
+                                    <li>🎯 <strong>Filtrado rápido:</strong> WHERE genre IS NOT NULL</li>
+                                    <li>💾 <strong>Ordenamiento:</strong> ORDER BY mejorado</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+    // Gráfico principal
     const ctx = document.getElementById('genreChart').getContext('2d');
     const genreChart = new Chart(ctx, {
         type: 'bar',
@@ -27,8 +182,99 @@
                     beginAtZero: true,
                     ticks: { stepSize: 1 }
                 }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Distribución de {{ total_genres }} Géneros ({{ total_games }} juegos total) - {% if index_exists %}Optimizada{% else %}Estándar{% endif %}'
+                }
             }
         }
     });
+
+    // Función para generar reporte de rendimiento
+    async function generatePerformanceReport() {
+        const btn = document.getElementById('reportBtn');
+        const modal = new bootstrap.Modal(document.getElementById('performanceModal'));
+        const content = document.getElementById('performanceContent');
+        
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Generando...';
+        modal.show();
+        
+        try {
+            const response = await fetch('{% url "genre_performance_report" %}', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const improvement = data.improvement_percentage;
+                const improvementColor = improvement > 0 ? 'success' : 'warning';
+                
+                content.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>⏱️ Tiempos de Respuesta</h6>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Sin índice:</span>
+                                        <strong class="text-warning">${data.no_index_time} ms</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Con índice:</span>
+                                        <strong class="text-success">${data.with_index_time} ms</strong>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Mejora:</span>
+                                        <strong class="text-${improvementColor}">${improvement.toFixed(1)}%</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>📊 Estadísticas</h6>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Total géneros:</span>
+                                        <strong>${data.total_genres}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Total juegos:</span>
+                                        <strong>${data.total_games}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Tipo consulta:</span>
+                                        <strong class="text-primary">GROUP BY + COUNT</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info mt-3">
+                        <h6>💡 Recomendación</h6>
+                        ${improvement > 10 ? 
+                            `<p>✅ <strong>El índice mejora significativamente el rendimiento (${improvement.toFixed(1)}%)</strong>. Se recomienda mantenerlo activo para consultas frecuentes.</p>` :
+                            `<p>⚠️ <strong>Mejora moderada (${improvement.toFixed(1)}%)</strong>. El beneficio del índice puede variar según el volumen de datos.</p>`
+                        }
+                    </div>
+                `;
+            } else {
+                content.innerHTML = '<div class="alert alert-danger">Error al generar el reporte</div>';
+            }
+        } catch (error) {
+            content.innerHTML = '<div class="alert alert-danger">Error de conexión</div>';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '📈 Generar Reporte de Rendimiento';
+        }
+    }
     </script>
 {% endblock content %}

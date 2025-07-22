@@ -20,7 +20,7 @@ from .search_views import (
     game_details_ajax,
 )
 
-from .analytics_views import graphs_by_gender
+from .analytics_views import graphs_by_gender, genre_performance_report
 
 from .admin_views import (
     backup_db,
@@ -45,6 +45,7 @@ __all__ = [
     "all",
     "game_details_ajax",
     "graphs_by_gender",
+    "genre_performance_report",
     "backup_db",
     "restore_db",
     "backup_management",
