@@ -1,8 +1,3 @@
-"""
-Vistas para administración del sistema (backup, restore, schema)
-Aplicando principios SOLID - Single Responsibility y Open/Closed
-"""
-
 import os
 import subprocess
 from django.shortcuts import render, redirect
@@ -16,8 +11,6 @@ from django.views.decorators.http import require_http_methods
 
 
 class DatabaseBackupService:
-    """Servicio para manejo de backups - Single Responsibility"""
-
     @staticmethod
     def create_backup():
         """Crea backup completo de la base de datos"""
@@ -47,37 +40,55 @@ class DatabaseBackupService:
     def create_selective_backup(selected_tables, backup_name=None, include_data=True):
         """Crea backup selectivo de tablas específicas"""
         if not backup_name:
-            timestamp = __import__('datetime').datetime.now().strftime('%Y%m%d_%H%M%S')
+            timestamp = __import__("datetime").datetime.now().strftime("%Y%m%d_%H%M%S")
             backup_name = f"steamdb_selective_backup_{timestamp}.sql"
-        
-        if not backup_name.endswith('.sql'):
-            backup_name += '.sql'
-            
+
+        if not backup_name.endswith(".sql"):
+            backup_name += ".sql"
+
         backup_path = os.path.join(settings.BASE_DIR, backup_name)
         db = settings.DATABASES["default"]
 
         # Construir comando pg_dump con tablas específicas
         cmd = [
             "pg_dump",
-            "-h", db["HOST"],
-            "-U", db["USER"],
-            "-d", db["NAME"],
-            "-f", backup_path,
+            "-h",
+            db["HOST"],
+            "-U",
+            db["USER"],
+            "-d",
+            db["NAME"],
+            "-f",
+            backup_path,
+            "--schema=steam",  # Especificar el esquema steam
         ]
-        
+
         # Agregar opciones según configuración
         if not include_data:
             cmd.append("--schema-only")
-        
-        # Agregar tablas específicas
+
+        # Agregar tablas específicas con el esquema correcto
         for table in selected_tables:
-            cmd.extend(["-t", table])
+            # Asegurar que la tabla tenga el prefijo del esquema
+            if not table.startswith("steam."):
+                table_name = f"steam.{table}"
+            else:
+                table_name = table
+            cmd.extend(["-t", table_name])
 
         env = os.environ.copy()
         env["PGPASSWORD"] = db["PASSWORD"]
 
-        subprocess.run(cmd, check=True, env=env)
-        return backup_path, backup_name
+        try:
+            subprocess.run(cmd, check=True, env=env)
+            return backup_path, backup_name
+        except subprocess.CalledProcessError as e:
+            # Mejorar el manejo de errores
+            raise Exception(
+                f"Error en pg_dump: {e}. Verifica que PostgreSQL esté instalado y configurado correctamente."
+            )
+        except Exception as e:
+            raise Exception(f"Error inesperado durante el backup: {e}")
 
     @staticmethod
     def restore_backup(sql_file):
@@ -149,13 +160,43 @@ class DatabaseSchemaService:
     def get_available_tables():
         """Obtiene información de tablas disponibles para backup"""
         tables = []
-        for model in apps.get_models():
-            tables.append(
-                {
-                    "model_name": model.__name__,
-                    "db_table": model._meta.db_table,
-                }
-            )
+        # Solo obtener modelos de la aplicación 'games'
+        try:
+            games_app = apps.get_app_config("games")
+            for model in games_app.get_models():
+                tables.append(
+                    {
+                        "model_name": model.__name__,
+                        "db_table": model._meta.db_table,
+                    }
+                )
+        except LookupError:
+            # Fallback: filtrar manualmente las tablas que empiecen con el esquema correcto
+            for model in apps.get_models():
+                # Solo incluir tablas que pertenezcan al esquema steam o games
+                if (
+                    model._meta.app_label == "games"
+                    or model._meta.db_table.startswith("steam.")
+                    or model._meta.db_table
+                    in [
+                        "games",
+                        "genres",
+                        "developers",
+                        "publishers",
+                        "about_game",
+                        "audio_lenguages",
+                        "languages",
+                        "packages",
+                        "plataforms",
+                        "categories",
+                    ]
+                ):
+                    tables.append(
+                        {
+                            "model_name": model.__name__,
+                            "db_table": model._meta.db_table,
+                        }
+                    )
         return tables
 
 
@@ -167,34 +208,45 @@ def backup_db(request):
     if request.method == "POST":
         try:
             # Procesar el formulario de backup
-            selected_tables = request.POST.getlist('selected_tables')
-            backup_name = request.POST.get('backup_name', '').strip()
-            include_data = request.POST.get('include_data') == 'on'
-            
+            selected_tables = request.POST.getlist("selected_tables")
+            backup_name = request.POST.get("backup_name", "").strip()
+            include_data = request.POST.get("include_data") == "on"
+
             if not selected_tables:
-                messages.error(request, "Debes seleccionar al menos una tabla para hacer el backup.")
-                return redirect('backup_db')
-            
+                messages.error(
+                    request,
+                    "Debes seleccionar al menos una tabla para hacer el backup.",
+                )
+                return redirect("backup_db")
+
             # Crear backup personalizado
             backup_path, backup_file = DatabaseBackupService.create_selective_backup(
                 selected_tables, backup_name, include_data
             )
-            
+
+            # Verificar que el archivo se creó correctamente
+            if not os.path.exists(backup_path) or os.path.getsize(backup_path) == 0:
+                messages.error(
+                    request,
+                    "El backup se creó pero está vacío. Verifica que las tablas seleccionadas tengan datos.",
+                )
+                return redirect("backup_db")
+
             return FileResponse(
                 open(backup_path, "rb"), as_attachment=True, filename=backup_file
             )
         except Exception as e:
-            messages.error(request, f"Error al crear backup: {e}")
-            return redirect('backup_db')
-    
+            messages.error(request, f"Error al crear backup: {str(e)}")
+            return redirect("backup_db")
+
     # GET: Mostrar formulario de selección de tablas
     available_tables = DatabaseSchemaService.get_available_tables()
-    
+
     context = {
-        'available_tables': available_tables,
-        'current_date': __import__('datetime').datetime.now().strftime('%Y%m%d_%H%M%S')
+        "available_tables": available_tables,
+        "current_date": __import__("datetime").datetime.now().strftime("%Y%m%d_%H%M%S"),
     }
-    
+
     return render(request, "backup.html", context)
 
 
@@ -245,8 +297,15 @@ def index_management(request):
 
     # Solo estas tablas permitidas
     tablas_permitidas = [
-        "about_game", "audio_lenguages", "developers", "games", "genres",
-        "languages", "packages", "plataforms", "publishers"
+        "about_game",
+        "audio_lenguages",
+        "developers",
+        "games",
+        "genres",
+        "languages",
+        "packages",
+        "plataforms",
+        "publishers",
     ]
     # Traducción de nombres
     traducciones = {
@@ -258,18 +317,20 @@ def index_management(request):
         "languages": "Idiomas",
         "packages": "Paquetes",
         "plataforms": "Plataformas",
-        "publishers": "Distribuidores"
+        "publishers": "Distribuidores",
     }
 
     tablas = []
     columnas = []
 
     with connection.cursor() as cursor:
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT table_name
             FROM information_schema.tables
             WHERE table_schema = 'steam'
-        """)
+        """
+        )
         tablas = [row[0] for row in cursor.fetchall() if row[0] in tablas_permitidas]
 
     # Selección de tabla
@@ -282,16 +343,20 @@ def index_management(request):
 
     if tabla_sel:
         with connection.cursor() as cursor:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT column_name
                 FROM information_schema.columns
                 WHERE table_schema = 'steam' AND table_name = %s
-            """, [tabla_sel])
+            """,
+                [tabla_sel],
+            )
             columnas = [row[0] for row in cursor.fetchall()]
 
         # Obtener índices existentes para la tabla seleccionada
         with connection.cursor() as cursor:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT
                     indexname,
                     indexdef
@@ -299,7 +364,9 @@ def index_management(request):
                     pg_indexes
                 WHERE
                     schemaname = 'steam' AND tablename = %s
-            """, [tabla_sel])
+            """,
+                [tabla_sel],
+            )
             indices = cursor.fetchall()
     else:
         columnas = []
@@ -315,7 +382,12 @@ def index_management(request):
             with connection.cursor() as cursor:
                 try:
                     if accion == "crear":
-                        if columna in columnas and tipo in ["BTREE", "HASH", "GIN", "GIST"]:
+                        if columna in columnas and tipo in [
+                            "BTREE",
+                            "HASH",
+                            "GIN",
+                            "GIST",
+                        ]:
                             index_name = f"idx_{tabla}_{columna}_{tipo.lower()}"
                             sql = f'CREATE INDEX {index_name} ON steam."{tabla}" USING {tipo} ("{columna}");'
                             cursor.execute(sql)
@@ -324,11 +396,14 @@ def index_management(request):
                             mensaje = "Parámetros inválidos para crear índice."
 
                     elif accion == "eliminar_todos":
-                        cursor.execute("""
+                        cursor.execute(
+                            """
                             SELECT indexname, indexdef
                             FROM pg_indexes
                             WHERE schemaname = 'steam' AND tablename = %s
-                        """, [tabla])
+                        """,
+                            [tabla],
+                        )
                         all_indices = cursor.fetchall()
                         eliminados = []
 
@@ -339,7 +414,9 @@ def index_management(request):
                             eliminados.append(index_name)
 
                         if eliminados:
-                            mensaje = f"Se eliminaron los índices: {', '.join(eliminados)}"
+                            mensaje = (
+                                f"Se eliminaron los índices: {', '.join(eliminados)}"
+                            )
                         else:
                             mensaje = "No hay índices eliminables (solo hay claves primarias o únicas)."
 
@@ -352,7 +429,7 @@ def index_management(request):
             index_name = request.POST.get("index_name")
             with connection.cursor() as cursor:
                 try:
-                    cursor.execute(f'DROP INDEX IF EXISTS {index_name};')
+                    cursor.execute(f"DROP INDEX IF EXISTS {index_name};")
                     mensaje = f"Índice {index_name} eliminado correctamente."
                 except Exception as e:
                     mensaje = f"Error: {str(e)}"
@@ -361,7 +438,6 @@ def index_management(request):
 
         else:
             mensaje = "Parámetros inválidos."
-
 
     tablas_traducidas = [(t, traducciones.get(t, t)) for t in tablas]
     context = {
