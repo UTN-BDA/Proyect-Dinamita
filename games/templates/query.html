@@ -29,14 +29,60 @@
     {% if results is not None %}
         <h3 class="mb-3">Resultados:</h3>
         {% if results %}
-            <ul class="list-group">
+            <div class="row">
                 {% for game in results %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        {{ game.name }}
-                        <span class="badge bg-secondary">{{ game.app_id }}</span>
-                    </li>
+                    <div class="col-md-4 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ game.name }}</h5>
+                                <p class="card-text">ID de la aplicación: {{ game.app_id }}</p>
+                                <p class="card-text">Fecha de lanzamiento: {{ game.rel_date }}</p>
+                                <p class="card-text">Dueños estimados: {{ game.estimated_owners }}</p>
+                                <p class="card-text">Edad requerida: {{ game.req_age }}</p>
+                                <p class="card-text">Precio: {% if game.price %}${{ game.price }}{% else %}Gratis{% endif %}</p>
+                                <p class="card-text">Logros: {{ game.achievements|default:"N/A" }}</p>
+                                <p class="card-text">DLCs: {{ game.dlc_count|default:"0" }}</p>
+                                <p class="card-text">
+                                    Géneros:
+                                    {% for genre in game.genres_set.all %}
+                                        {{ genre.genre }}
+                                        {% if not forloop.last %},{% endif %}
+                                    {% empty %}
+                                        Sin géneros
+                                    {% endfor %}
+                                </p>
+                                <p class="card-text">
+                                    Desarrolladores:
+                                    {% for developer in game.developers_set.all %}
+                                        {{ developer.developer }}
+                                        {% if not forloop.last %},{% endif %}
+                                    {% empty %}
+                                        Sin desarrolladores
+                                    {% endfor %}
+                                </p>
+                                <p class="card-text">
+                                    Editores:
+                                    {% for publisher in game.publishers_set.all %}
+                                        {{ publisher.publisher }}
+                                        {% if not forloop.last %},{% endif %}
+                                    {% empty %}
+                                        Sin editores
+                                    {% endfor %}
+                                </p>
+                                <p class="card-text">
+                                    Categorías:
+                                    {% for category in game.categories_set.all %}
+                                        {{ category.category }}
+                                        {% if not forloop.last %},{% endif %}
+                                    {% empty %}
+                                        Sin categorías
+                                    {% endfor %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 {% endfor %}
-            </ul>
+            </div>
         {% else %}
             <div class="alert alert-warning mt-3">No se encontraron resultados.</div>
         {% endif %}
