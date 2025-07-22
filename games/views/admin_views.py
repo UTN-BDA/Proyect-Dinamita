@@ -298,25 +298,25 @@ def index_management(request):
     # Solo estas tablas permitidas
     tablas_permitidas = [
         "about_game",
-        "audio_lenguages",
+        "audio_languages",  # Corregido: era "audio_lenguages"
         "developers",
         "games",
         "genres",
         "languages",
         "packages",
-        "plataforms",
+        "platforms",  # Corregido: era "plataforms"
         "publishers",
     ]
     # Traducción de nombres
     traducciones = {
         "about_game": "Acerca del Juego",
-        "audio_lenguages": "Idiomas de Audio",
+        "audio_languages": "Idiomas de Audio",  # Corregido
         "developers": "Desarrolladores",
         "games": "Juegos",
         "genres": "Géneros",
         "languages": "Idiomas",
         "packages": "Paquetes",
-        "plataforms": "Plataformas",
+        "platforms": "Plataformas",  # Corregido
         "publishers": "Distribuidores",
     }
 
@@ -357,17 +357,23 @@ def index_management(request):
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT
+                SELECT 
                     indexname,
-                    indexdef
+                    indexdef,
+                    COALESCE(pg_size_pretty(pg_relation_size(indexname::regclass)), 'N/A') as size
                 FROM
                     pg_indexes
                 WHERE
                     schemaname = 'steam' AND tablename = %s
+                ORDER BY indexname
             """,
                 [tabla_sel],
             )
             indices = cursor.fetchall()
+            # Asegurar que cada tupla tenga exactamente 3 elementos
+            indices = [
+                (row[0], row[1], row[2] if len(row) > 2 else "N/A") for row in indices
+            ]
     else:
         columnas = []
         indices = []
@@ -389,9 +395,37 @@ def index_management(request):
                             "GIST",
                         ]:
                             index_name = f"idx_{tabla}_{columna}_{tipo.lower()}"
-                            sql = f'CREATE INDEX {index_name} ON steam."{tabla}" USING {tipo} ("{columna}");'
-                            cursor.execute(sql)
-                            mensaje = f"Índice {index_name} creado correctamente."
+
+                            # Verificar si el índice ya existe
+                            cursor.execute(
+                                """
+                                SELECT indexname FROM pg_indexes 
+                                WHERE schemaname = 'steam' AND tablename = %s AND indexname = %s
+                            """,
+                                [tabla, index_name],
+                            )
+
+                            if cursor.fetchone():
+                                mensaje = f"El índice {index_name} ya existe."
+                            else:
+                                # Crear índice con manejo de errores mejorado
+                                try:
+                                    sql = f'CREATE INDEX CONCURRENTLY {index_name} ON steam."{tabla}" USING {tipo} ("{columna}");'
+                                    cursor.execute(sql)
+                                    mensaje = f"✅ Índice {index_name} creado correctamente en la columna '{columna}' de la tabla '{tabla}'. Esto optimizará las consultas que filtren u ordenen por esta columna."
+                                except Exception as e:
+                                    # Si falla CONCURRENTLY, intentar sin él
+                                    if "CONCURRENTLY" in str(e):
+                                        try:
+                                            sql = f'CREATE INDEX {index_name} ON steam."{tabla}" USING {tipo} ("{columna}");'
+                                            cursor.execute(sql)
+                                            mensaje = f"✅ Índice {index_name} creado correctamente en la columna '{columna}' de la tabla '{tabla}' (sin CONCURRENTLY). Esto optimizará las consultas que filtren u ordenen por esta columna."
+                                        except Exception as e2:
+                                            mensaje = (
+                                                f"❌ Error al crear índice: {str(e2)}"
+                                            )
+                                    else:
+                                        mensaje = f"❌ Error al crear índice: {str(e)}"
                         else:
                             mensaje = "Parámetros inválidos para crear índice."
 

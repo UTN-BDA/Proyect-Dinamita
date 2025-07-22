@@ -17,6 +17,7 @@ from .game_views import (
 from .search_views import (
     game_search,
     all_games as all,  # Manteniendo compatibilidad con URLs existentes
+    game_details_ajax,
 )
 
 from .analytics_views import graphs_by_gender
@@ -42,6 +43,7 @@ __all__ = [
     "complete_description",
     "game_search",
     "all",
+    "game_details_ajax",
     "graphs_by_gender",
     "backup_db",
     "restore_db",

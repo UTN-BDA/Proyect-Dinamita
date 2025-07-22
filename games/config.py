@@ -1,12 +1,5 @@
-"""
-Configuraciones y constantes centralizadas
-Aplicando principio DRY - Don't Repeat Yourself
-"""
+PAGINATION_SIZE = 25
 
-# Configuración de paginación
-PAGINATION_SIZE = 10
-
-# Campos de búsqueda disponibles
 SEARCH_FIELDS = [
     ("app_id", "App ID"),
     ("name", "Nombre"),
@@ -17,13 +10,11 @@ SEARCH_FIELDS = [
     ("price", "Precio"),
 ]
 
-# Configuración de archivos de backup
 BACKUP_CONFIG = {
     "default_filename": "steamdb_backup.sql",
     "temp_restore_filename": "restore_temp.sql",
 }
 
-# Mensajes de éxito y error reutilizables
 MESSAGES = {
     "game_created": "Juego '{name}' creado exitosamente",
     "game_updated": "Juego '{name}' actualizado exitosamente",
@@ -34,7 +25,6 @@ MESSAGES = {
     "unexpected_error": "Error inesperado: {error}",
 }
 
-# URLs de redirección comunes
 REDIRECT_URLS = {
     "game_management": "game_management_home",
     "search_games": "search_and_edit_game",

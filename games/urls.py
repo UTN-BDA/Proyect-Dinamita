@@ -19,6 +19,7 @@ from .views import (
     edit_game,
     complete_description,
     index_management,
+    game_details_ajax,
 )
 
 urlpatterns = [
@@ -45,4 +46,5 @@ urlpatterns = [
         name="complete_description",
     ),
     path("index-manager/", index_management, name="index_manager"),
+    path("api/game/<str:app_id>/", game_details_ajax, name="game_details_ajax"),
 ]

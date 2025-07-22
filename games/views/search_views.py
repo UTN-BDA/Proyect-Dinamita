@@ -6,6 +6,7 @@ Aplicando principios DRY y Single Responsibility
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.http import JsonResponse
 
 from ..models import Games, Genres
 from ..config import SEARCH_FIELDS, PAGINATION_SIZE
@@ -40,19 +41,21 @@ def game_search(request):
 
 
 def all_games(request):
-    """Vista para mostrar todos los juegos con filtros - Refactorizada"""
-
-    # Obtener todos los géneros para el filtro
-    all_genres = Genres.objects.all()
+    """Vista optimizada para mostrar solo ID y nombre de juegos - Más eficiente"""
 
     # Obtener filtros de la URL
     filters = _extract_filters(request)
 
-    # Aplicar filtros y obtener juegos
-    games = _apply_filters_to_games(filters)
+    # Aplicar filtros pero solo cargar ID y nombre (optimización crítica)
+    games = _apply_filters_to_games_optimized(filters)
 
-    # Paginación
-    page_obj = _paginate_games(games, request.GET.get("page"))
+    # Paginación con más elementos por página para listas simples
+    page_obj = _paginate_games(games, request.GET.get("page"), page_size=50)
+
+    # Solo obtener géneros únicos si se necesita filtrar
+    all_genres = (
+        Genres.objects.values("genre").distinct() if not filters["genre_filter"] else []
+    )
 
     context = {
         "games": page_obj,
@@ -61,6 +64,31 @@ def all_games(request):
     }
 
     return render(request, "all.html", context)
+
+
+def game_details_ajax(request, app_id):
+    """Vista AJAX para obtener detalles de un juego específico"""
+    try:
+        game = Games.objects.get(app_id=app_id)
+        data = {
+            "success": True,
+            "game": {
+                "app_id": game.app_id,
+                "name": game.name,
+                "rel_date": (
+                    game.rel_date.strftime("%d/%m/%Y") if game.rel_date else "N/A"
+                ),
+                "price": f"${game.price}" if game.price else "Gratis",
+                "req_age": game.req_age or "N/A",
+                "estimated_owners": game.estimated_owners or "N/A",
+                "achievements": game.achievements or 0,
+                "dlc_count": game.dlc_count or 0,
+            },
+        }
+    except Games.DoesNotExist:
+        data = {"success": False, "error": "Juego no encontrado"}
+
+    return JsonResponse(data)
 
 
 # Funciones auxiliares para mantener las vistas limpias (Single Responsibility)
@@ -93,7 +121,24 @@ def _apply_filters_to_games(filters):
     return games.order_by("name")
 
 
-def _paginate_games(games, page_number):
+def _apply_filters_to_games_optimized(filters):
+    """Aplica filtros pero solo carga ID y nombre - OPTIMIZACIÓN CRÍTICA"""
+    # Solo seleccionar los campos necesarios para mejorar performance
+    games = Games.objects.only("app_id", "name")
+
+    if filters["genre_filter"]:
+        games = games.filter(genres__genre=filters["genre_filter"])
+
+    if filters["letter_filter"]:
+        games = games.filter(name__istartswith=filters["letter_filter"])
+
+    return games.order_by("name")
+
+
+def _paginate_games(games, page_number, page_size=None):
     """Aplica paginación a los juegos"""
-    paginator = Paginator(games, PAGINATION_SIZE)
+    if page_size is None:
+        page_size = PAGINATION_SIZE
+
+    paginator = Paginator(games, page_size)
     return paginator.get_page(page_number)

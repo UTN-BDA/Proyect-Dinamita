@@ -6,6 +6,17 @@
 
 {% block content %}
     <h2 class="mb-4">Administrador de Índices en la Base de Datos</h2>
+    
+    <!-- Información útil -->
+    <div class="alert alert-info mb-4">
+        <h5>💡 Recomendaciones para optimizar "Ver todos los juegos":</h5>
+        <ul class="mb-2">
+            <li><strong>Tabla games, columna name:</strong> Optimiza ordenamiento y filtros por letra inicial</li>
+            <li><strong>Tabla genres, columna genre:</strong> Optimiza filtros por género</li>
+            <li><strong>Tabla genres, columna app_id:</strong> Optimiza joins entre games y genres</li>
+        </ul>
+        <small class="text-muted">Los índices BTREE son ideales para ordenamiento y búsquedas de igualdad/rango.</small>
+    </div>
 
     <form method="post" class="row g-3">
         {% csrf_token %}
@@ -21,10 +32,10 @@
         <div class="col-md-3">
             <label for="tipo" class="form-label">Tipo de Índice</label>
             <select name="tipo" id="tipo" class="form-select">
-                <option value="BTREE">BTREE</option>
-                <option value="HASH">HASH</option>
-                <option value="GIN">GIN</option>
-                <option value="GIST">GIST</option>
+                <option value="BTREE" selected>BTREE (recomendado para texto/números)</option>
+                <option value="HASH">HASH (solo para igualdad exacta)</option>
+                <option value="GIN">GIN (para arrays/jsonb)</option>
+                <option value="GIST">GIST (para datos geométricos)</option>
             </select>
         </div>
         <div class="col-md-3">
@@ -50,10 +61,11 @@
     {% if indices %}
         <h5 class="mt-4">Índices existentes en la tabla seleccionada:</h5>
         <ul class="list-group mb-4">
-            {% for nombre, definicion in indices %}
+            {% for nombre, definicion, size in indices %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <div>
                         <strong>{{ nombre }}</strong>
+                        <small class="text-muted d-block">Tamaño: {{ size }}</small>
                     </div>
                     {% if "PRIMARY KEY" not in definicion and "UNIQUE" not in definicion %}
                         <form method="post" style="margin:0;">
