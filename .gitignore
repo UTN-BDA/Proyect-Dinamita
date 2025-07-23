@@ -8,6 +8,7 @@ dataset/
 # C extensions
 *.so
 *.json
+*.sql
 
 # Distribution / packaging
 .Python

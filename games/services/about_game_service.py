@@ -2,6 +2,7 @@
 Servicio para gestión de descripciones de juegos
 Siguiendo principios SOLID - Single Responsibility
 """
+
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from ..models import Games, AboutGame
