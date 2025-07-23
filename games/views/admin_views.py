@@ -45,10 +45,26 @@ class DatabaseBackupService:
             timestamp = __import__("datetime").datetime.now().strftime("%Y%m%d_%H%M%S")
             backup_name = f"steamdb_selective_backup_{timestamp}.sql"
 
+        # Sanitizar el nombre del archivo para prevenir path traversal
+        import string
+
+        valid_chars = f"-_.{string.ascii_letters}{string.digits}"
+        backup_name = "".join(c for c in backup_name if c in valid_chars)
+
+        if not backup_name:
+            backup_name = f"steamdb_backup_{__import__('datetime').datetime.now().strftime('%Y%m%d_%H%M%S')}.sql"
+
         if not backup_name.endswith(".sql"):
             backup_name += ".sql"
 
+        # Construir path y validar que esté dentro del directorio base
         backup_path = os.path.join(settings.BASE_DIR, backup_name)
+        backup_path = os.path.abspath(backup_path)
+        base_dir = os.path.abspath(settings.BASE_DIR)
+
+        # Verificar que el archivo resultante esté dentro del directorio base
+        if not backup_path.startswith(base_dir):
+            raise ValueError("Ruta de backup inválida por razones de seguridad")
         db = settings.DATABASES["default"]
 
         # Construir comando pg_dump con tablas específicas
@@ -274,7 +290,7 @@ def backup_db(request):
                 selected_tables, backup_name, include_data
             )
 
-            # Verificar que el archivo se creó correctamente
+            # Verificar que el archivo se creó correctamente y está en ubicación segura
             if not os.path.exists(backup_path) or os.path.getsize(backup_path) == 0:
                 messages.error(
                     request,
@@ -282,9 +298,43 @@ def backup_db(request):
                 )
                 return redirect("backup_db")
 
-            return FileResponse(
-                open(backup_path, "rb"), as_attachment=True, filename=backup_file
-            )
+            # Validar que el archivo está en el directorio esperado (doble verificación de seguridad)
+            abs_backup_path = os.path.abspath(backup_path)
+            abs_base_dir = os.path.abspath(settings.BASE_DIR)
+
+            if not abs_backup_path.startswith(abs_base_dir):
+                messages.error(request, "Error de seguridad: ruta de archivo inválida.")
+                return redirect("backup_db")
+
+            # Validar que el nombre del archivo es seguro
+            safe_filename = os.path.basename(abs_backup_path)
+            if (
+                not safe_filename.endswith(".sql")
+                or ".." in safe_filename
+                or "/" in safe_filename
+                or "\\" in safe_filename
+            ):
+                messages.error(request, "Nombre de archivo inválido.")
+                return redirect("backup_db")
+
+            # Construir ruta segura usando solo el directorio base y el nombre de archivo validado
+            safe_file_path = os.path.join(abs_base_dir, safe_filename)
+
+            # Leer archivo de forma segura
+            try:
+                with open(safe_file_path, "rb") as backup_file_handle:
+                    response = HttpResponse(
+                        backup_file_handle.read(), content_type="application/sql"
+                    )
+                    response["Content-Disposition"] = (
+                        f'attachment; filename="{safe_filename}"'
+                    )
+                    return response
+            except (IOError, OSError) as e:
+                messages.error(
+                    request, f"Error al acceder al archivo de backup: {str(e)}"
+                )
+                return redirect("backup_db")
         except Exception as e:
             messages.error(request, f"Error al crear backup: {str(e)}")
             return redirect("backup_db")
@@ -560,8 +610,16 @@ def index_management(request):
                     )
 
                     if cursor.fetchone():
-                        cursor.execute(f'DROP INDEX IF EXISTS "steam"."{index_name}";')
-                        mensaje = f"Índice {index_name} eliminado correctamente."
+                        # Validate index name contains only safe characters
+                        if not re.match(r"^[a-zA-Z0-9_]+$", index_name):
+                            mensaje = (
+                                "Nombre de índice contiene caracteres no permitidos."
+                            )
+                        else:
+                            cursor.execute(
+                                'DROP INDEX IF EXISTS "steam".%s', [f'"{index_name}"']
+                            )
+                            mensaje = f"Índice {index_name} eliminado correctamente."
                     else:
                         mensaje = "Índice no encontrado o no permitido."
 
