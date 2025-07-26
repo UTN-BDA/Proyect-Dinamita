@@ -174,7 +174,6 @@
             const modal = new bootstrap.Modal(document.getElementById('gameDetailsModal'));
             const contentDiv = document.getElementById('gameDetailsContent');
             
-            // Mostrar loading
             contentDiv.innerHTML = `
                 <div class="text-center">
                     <div class="spinner-border text-primary" role="status">
@@ -186,7 +185,6 @@
             
             modal.show();
             
-            // Hacer petición AJAX para obtener detalles
             fetch(`/api/game/${appId}/`)
                 .then(response => {
                     console.log('Respuesta HTTP:', response.status); // Debug

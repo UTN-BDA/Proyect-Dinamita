@@ -1,8 +1,3 @@
-"""
-Servicio de transacciones complejas (Facade Pattern)
-Coordina múltiples servicios en transacciones atómicas
-"""
-
 from django.db import transaction
 from .game_service import GameService
 from .about_game_service import AboutGameService
@@ -11,13 +6,13 @@ from typing import Dict, List
 
 
 class TransactionService:
-    """Servicio principal para gestionar transacciones complejas (Facade Pattern)"""
+    #Servicio principal para gestionar transacciones complejas 
 
     @staticmethod
     def create_complete_game(
         game_data: Dict, description_data: Dict = None, genres_list: List[str] = None
     ) -> Dict:
-        """Crea un juego completo con descripción y géneros en una sola transacción"""
+        #Crea un juego completo con descripción y géneros en una sola transacción
         with transaction.atomic():
             # Crear el juego base
             game = GameService.create_game(game_data)
@@ -45,7 +40,7 @@ class TransactionService:
         description_data: Dict = None,
         genres_list: List[str] = None,
     ) -> Dict:
-        """Actualiza un juego completo en una sola transacción"""
+        #Actualiza un juego completo en una sola transacción
         with transaction.atomic():
             result = {}
 

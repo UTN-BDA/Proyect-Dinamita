@@ -1,7 +1,3 @@
-"""
-Servicio de análisis de rendimiento
-Principio: Single Responsibility - Solo análisis de rendimiento
-"""
 
 import time
 from django.db import connection, transaction
@@ -11,13 +7,13 @@ from .genre_service import GenreAnalyticsService
 
 
 class PerformanceService:
-    """Maneja análisis de rendimiento y gestión de índices"""
+    #Maneja análisis de rendimiento y gestión de índices
 
     INDEX_NAME = "idx_genres_genre_btree"
 
     @staticmethod
     def create_genre_index() -> Dict[str, any]:
-        """Crea índice para géneros"""
+        #Crea índice para géneros
         try:
             with transaction.atomic():
                 with connection.cursor() as cursor:
@@ -48,7 +44,7 @@ class PerformanceService:
 
     @staticmethod
     def drop_genre_index() -> Dict[str, any]:
-        """Elimina índice de géneros"""
+        #Elimina índice de géneros
         try:
             with transaction.atomic():
                 with connection.cursor() as cursor:
@@ -71,7 +67,7 @@ class PerformanceService:
 
     @staticmethod
     def measure_query_performance() -> Dict[str, float]:
-        """Mide rendimiento de consultas con y sin índice"""
+        #Mide rendimiento de consultas con y sin índice
 
         # Consulta sin índice
         PerformanceService.drop_genre_index()

@@ -1,7 +1,3 @@
-"""
-Servicio de seguridad para validaciones administrativas
-Principio: Single Responsibility - Solo maneja validaciones de seguridad
-"""
 
 import os
 import string
@@ -12,7 +8,7 @@ from typing import List
 class SecurityService:
     """Maneja todas las validaciones de seguridad"""
 
-    # Lista de tablas permitidas - SIN TABLAS DE AUTENTICACIÓN
+    # Lista de tablas permitidas
     ALLOWED_TABLES = [
         "about_game",
         "audio_languages",

@@ -63,7 +63,6 @@ def create_game(request):
 
 @login_required
 def search_and_edit_game(request):
-    """Vista para buscar juegos - Simplificada"""
 
     def search_callback(form_data):
         field = form_data["search_field"]
@@ -86,7 +85,6 @@ def search_and_edit_game(request):
 
 @login_required
 def edit_game(request, app_id):
-    """Vista para editar un juego existente - Simplificada"""
 
     # Verificar que el juego existe
     game = GameService.get_game(app_id)

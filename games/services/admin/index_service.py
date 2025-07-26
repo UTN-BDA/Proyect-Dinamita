@@ -1,8 +1,3 @@
-"""
-Servicio de gestión de índices de base de datos
-Principio: Single Responsibility - Solo maneja índices
-"""
-
 from django.db import connection, transaction
 from typing import List, Dict, Optional
 from .security_service import SecurityService

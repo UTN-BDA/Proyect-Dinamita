@@ -1,8 +1,3 @@
-"""
-Servicio de análisis de schema de base de datos
-Principio: Single Responsibility - Solo analiza estructura de BD
-"""
-
 from django.apps import apps
 from django.db import models
 from typing import List, Dict

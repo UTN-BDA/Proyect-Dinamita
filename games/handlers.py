@@ -42,19 +42,18 @@ class FormHandler:
         template_name,
         context,
     ):
-        # Crear formularios con datos POST o ejecutar funciones lambda
+        
         post_forms = {}
         for key, form_definition in forms.items():
             if callable(form_definition):
-                post_forms[key] = form_definition()  # Ejecutar lambda/función
+                post_forms[key] = form_definition()  
             else:
-                post_forms[key] = form_definition(request.POST)  # Clase de formulario
+                post_forms[key] = form_definition(request.POST)  
 
-        # Verificar si el formulario principal es válido
+        
         main_form = list(post_forms.values())[0]
         if main_form.is_valid():
             try:
-                # Ejecutar la lógica de negocio
                 result = success_callback(post_forms)
 
                 messages.success(request, success_message.format(**result))
@@ -65,20 +64,17 @@ class FormHandler:
             except Exception as e:
                 messages.error(request, f"Error inesperado: {str(e)}")
 
-        # Si hay errores, renderizar con los formularios que contienen errores
         render_context = {**post_forms, **(context or {})}
         return render(request, template_name, render_context)
 
     @staticmethod
     def _handle_get_request(request, template_name, forms, context):
-        """Maneja requests GET"""
-        # Crear formularios vacíos o ejecutar funciones lambda
         get_forms = {}
         for key, form_definition in forms.items():
             if callable(form_definition):
-                get_forms[key] = form_definition()  # Ejecutar lambda/función
+                get_forms[key] = form_definition()  
             else:
-                get_forms[key] = form_definition()  # Clase de formulario sin argumentos
+                get_forms[key] = form_definition()  
 
         render_context = {**get_forms, **(context or {})}
         return render(request, template_name, render_context)
@@ -94,16 +90,13 @@ class GenreProcessor:
 
     @staticmethod
     def prepare_genres_for_form(genres_list: List[str]) -> str:
-        """Prepara géneros para mostrar en formulario"""
         return ", ".join(genres_list) if genres_list else ""
 
 
 class GameFormProcessor:
-    """Procesador especializado para formularios de juegos"""
 
     @staticmethod
     def prepare_game_data(forms: Dict) -> Dict:
-        """Prepara datos del juego desde múltiples formularios"""
         game_form = forms.get("game_form")
         description_form = forms.get("description_form")
         genre_form = forms.get("genre_form")
@@ -126,11 +119,8 @@ class GameFormProcessor:
 
 
 class SearchHandler:
-    """Manejador especializado para búsquedas"""
-
     @staticmethod
     def handle_search(request, form_class, search_callback):
-        """Maneja búsquedas genéricas"""
         form = form_class()
         results = []
 
@@ -143,18 +133,14 @@ class SearchHandler:
 
 
 class ResponseHelper:
-    """Helper para responses comunes"""
-
     @staticmethod
     def redirect_with_error(message: str, redirect_url: str):
-        """Redirecciona con mensaje de error"""
         from django.shortcuts import redirect
         from django.contrib import messages
 
-        messages.error(None, message)  # El request se manejará en el template
+        messages.error(None, message)  
         return redirect(redirect_url)
 
     @staticmethod
     def simple_render(request, template_name: str, context: Dict = None):
-        """Renderizado simple con contexto opcional"""
         return render(request, template_name, context or {})

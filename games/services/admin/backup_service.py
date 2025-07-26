@@ -1,8 +1,3 @@
-"""
-Servicio de backup y restore de base de datos
-Principio: Single Responsibility - Solo maneja operaciones de backup/restore
-"""
-
 import os
 import subprocess
 import datetime

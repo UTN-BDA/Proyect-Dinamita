@@ -1,8 +1,3 @@
-"""
-Servicio de análisis de géneros
-Principio: Single Responsibility - Solo análisis de géneros
-"""
-
 from django.db.models import Count
 from django.db import connection
 from typing import Dict, List
@@ -15,7 +10,7 @@ class GenreAnalyticsService:
 
     @staticmethod
     def get_genre_statistics() -> Dict[str, List]:
-        """Obtiene estadísticas de géneros usando ORM"""
+        #Obtiene estadísticas de géneros usando ORM
         genre_counts = (
             Genres.objects.values("genre")
             .annotate(count=Count("app", distinct=True))
@@ -30,7 +25,7 @@ class GenreAnalyticsService:
 
     @staticmethod
     def get_genre_statistics_optimized() -> Dict[str, List]:
-        """Obtiene estadísticas optimizadas usando SQL directo"""
+        #Obtiene estadísticas optimizadas usando SQL directo
         with connection.cursor() as cursor:
             sql = """
             SELECT g.genre, COUNT(DISTINCT g.app_id) as count
@@ -49,7 +44,7 @@ class GenreAnalyticsService:
 
     @staticmethod
     def get_genre_summary(genre_data: Dict[str, List]) -> Dict[str, int]:
-        """Obtiene resumen de estadísticas de géneros"""
+        #Obtiene resumen de estadísticas de géneros
         return {
             "total_genres": len(genre_data["labels"]),
             "total_games": sum(genre_data["data"]),
@@ -59,7 +54,7 @@ class GenreAnalyticsService:
 
     @staticmethod
     def check_genre_index_exists() -> bool:
-        """Verifica si existe el índice para géneros"""
+        #Verifica si existe el índice para géneros
         with connection.cursor() as cursor:
             cursor.execute(
                 """

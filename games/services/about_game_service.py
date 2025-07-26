@@ -1,8 +1,3 @@
-"""
-Servicio para gestión de descripciones de juegos
-Siguiendo principios SOLID - Single Responsibility
-"""
-
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from ..models import Games, AboutGame
@@ -11,11 +6,10 @@ from typing import Dict, Optional
 
 
 class AboutGameService:
-    """Servicio para gestionar descripciones de juegos"""
 
     @staticmethod
     def update_or_create_description(app_id: str, description_data: Dict) -> AboutGame:
-        """Crea o actualiza la descripción de un juego"""
+        #Crea o actualiza la descripción de un juego
         with transaction.atomic():
             game = GameService.get_game(app_id)
             if not game:
@@ -28,7 +22,7 @@ class AboutGameService:
 
     @staticmethod
     def get_description(app_id: str) -> Optional[AboutGame]:
-        """Obtiene la descripción de un juego"""
+        #Obtiene la descripción de un juego
         try:
             game = Games.objects.get(app_id=app_id)
             return AboutGame.objects.get(app=game)

@@ -1,7 +1,3 @@
-"""
-Vistas para búsquedas y listados de juegos
-Aplicando principios DRY y Single Responsibility
-"""
 
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
@@ -14,7 +10,7 @@ from ..config import SEARCH_FIELDS, PAGINATION_SIZE
 
 @login_required
 def game_search(request):
-    """Vista de búsqueda de juegos - Refactorizada para ser más limpia"""
+    """Vista de búsqueda de juegos - Refactorizada"""
 
     context = {
         "fields": SEARCH_FIELDS,
@@ -41,12 +37,12 @@ def game_search(request):
 
 
 def all_games(request):
-    """Vista optimizada para mostrar solo ID y nombre de juegos - Más eficiente"""
+    """Vista optimizada para mostrar solo ID y nombre de juegos"""
 
     # Obtener filtros de la URL
     filters = _extract_filters(request)
 
-    # Aplicar filtros pero solo cargar ID y nombre (optimización crítica)
+    # Aplicar filtros pero solo cargar ID y nombre 
     games = _apply_filters_to_games_optimized(filters)
 
     # Paginación con más elementos por página para listas simples
@@ -60,7 +56,7 @@ def all_games(request):
     context = {
         "games": page_obj,
         "all_genres": all_genres,
-        **filters,  # Spread de filtros para el template
+        **filters,  
     }
 
     return render(request, "all.html", context)
@@ -91,17 +87,16 @@ def game_details_ajax(request, app_id):
     return JsonResponse(data)
 
 
-# Funciones auxiliares para mantener las vistas limpias (Single Responsibility)
 
 
 def _perform_game_search(field: str, query: str):
-    """Realiza búsqueda de juegos por campo específico"""
+    #Realiza búsqueda de juegos por campo específico
     filter_kwargs = {f"{field}__icontains": query}
     return Games.objects.filter(**filter_kwargs)
 
 
 def _extract_filters(request):
-    """Extrae y normaliza filtros de la request"""
+    #Extrae y normaliza filtros de la request
     return {
         "genre_filter": request.GET.get("genre_filter", ""),
         "letter_filter": request.GET.get("letter_filter", "").upper(),
@@ -109,7 +104,7 @@ def _extract_filters(request):
 
 
 def _apply_filters_to_games(filters):
-    """Aplica filtros a la consulta de juegos"""
+    #Aplica filtros a la consulta de juegos
     games = Games.objects.all()
 
     if filters["genre_filter"]:
@@ -122,8 +117,6 @@ def _apply_filters_to_games(filters):
 
 
 def _apply_filters_to_games_optimized(filters):
-    """Aplica filtros pero solo carga ID y nombre - OPTIMIZACIÓN CRÍTICA"""
-    # Solo seleccionar los campos necesarios para mejorar performance
     games = Games.objects.only("app_id", "name")
 
     if filters["genre_filter"]:
@@ -136,7 +129,7 @@ def _apply_filters_to_games_optimized(filters):
 
 
 def _paginate_games(games, page_number, page_size=None):
-    """Aplica paginación a los juegos"""
+    #Aplica paginación a los juegos
     if page_size is None:
         page_size = PAGINATION_SIZE
 

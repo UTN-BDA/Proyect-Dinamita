@@ -1,7 +1,3 @@
-"""
-Servicio para gestión de juegos
-Siguiendo principios SOLID - Single Responsibility
-"""
 
 from django.db import transaction
 from django.core.exceptions import ValidationError
@@ -12,7 +8,7 @@ from typing import Dict, List, Optional
 class GameService:
     @staticmethod
     def create_game(game_data: Dict) -> Games:
-        """Crea un nuevo juego con validaciones"""
+        #Crea un nuevo juego con validaciones
         with transaction.atomic():
             # Verificar si el juego ya existe
             if Games.objects.filter(app_id=game_data["app_id"]).exists():
@@ -25,7 +21,7 @@ class GameService:
 
     @staticmethod
     def update_game(app_id: str, game_data: Dict) -> Games:
-        """Actualiza un juego existente"""
+        #Actualiza un juego existente
         with transaction.atomic():
             try:
                 game = Games.objects.get(app_id=app_id)
@@ -38,7 +34,7 @@ class GameService:
 
     @staticmethod
     def get_game(app_id: str) -> Optional[Games]:
-        """Obtiene un juego por su ID"""
+        #Obtiene un juego por su ID
         try:
             return Games.objects.get(app_id=app_id)
         except Games.DoesNotExist:
@@ -46,6 +42,6 @@ class GameService:
 
     @staticmethod
     def search_games(field: str, query: str) -> List[Games]:
-        """Busca juegos por campo y término"""
+        #Busca juegos por campo y término
         filter_kwargs = {f"{field}__icontains": query}
         return Games.objects.filter(**filter_kwargs)

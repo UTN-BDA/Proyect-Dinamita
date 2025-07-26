@@ -1,9 +1,4 @@
-"""
-Views package - Refactorizado para mejor organización
-Aplicando principios SOLID - Single Responsibility y organización modular
-"""
 
-# Importar todas las vistas desde sus módulos especializados
 from .auth_views import registrar_usuario, home, graphs_home
 
 from .game_views import (
@@ -16,7 +11,7 @@ from .game_views import (
 
 from .search_views import (
     game_search,
-    all_games as all,  # Manteniendo compatibilidad con URLs existentes
+    all_games as all,  
     game_details_ajax,
 )
 
@@ -31,7 +26,6 @@ from .admin_views import (
     index_management,
 )
 
-# Re-exportar todas las vistas para mantener compatibilidad con el sistema existente
 __all__ = [
     "registrar_usuario",
     "home",
